@@ -1,9 +1,48 @@
 <app-header />
-<main class="grid grid-cols-[6%_1fr]">
-  <app-sidebar [sidebarLinks]="sidebarLinks()" />
-  
-  <section class="p-6 bg-[#f7f7f8]">
-    <p>dashboard works!</p>
+<main class="grid grid-cols-1 lg:grid-cols-[6%_1fr]">
+  <app-sidebar [sidebarLinks]="sidebarLinks()" class="hidden lg:block" />
+
+  <section class="lg:py-12 lg:px-24 p-6 bg-[#f7f7f8] w-full min-h-[92dvh]">
+    <div class="flex justify-between items-center">
+      <h1 class="text-xl font-semibold text-[#282D39]">Scenarios</h1>
+
+      <a [routerLink]="['/new-scenario']" routerLinkActive="router-link-active"  class="bg-primary px-3 py-2 rounded-md flex gap-2 justify-center items-center">
+        <img src="images/white-add.svg" alt="white add icon" />
+        <span class="text-sm font-medium text-white">New Scenario</span>
+      </a>
+    </div>
+
+    <div class="mt-12 flex flex-col gap-8">
+      <div class="border border-[#E4E5E7] bg-white flex justify-start items-center gap-2 py-2 px-3 w-fit">
+        <img src="images/search.svg" alt="search icon" />
+        <input type="text" placeholder="Type to search..." class="placeholder:text-[#9297A0] outline-none" />
+      </div>
+    </div>
+
+    <table class="border-collapse mt-12">
+      <thead class="space-y-4">
+        <tr class="uppercase grid grid-cols-[1fr_1fr_1fr_10%] lg:grid-cols-4 text-start mb-4">
+          <th class="px-4 text-start font-medium text-sm text-[#747884]">Scenario name</th>
+          <th class="px-4 text-start font-medium text-sm text-[#747884]">Number of respondents</th>
+          <th class="px-4 text-start font-medium text-sm text-[#747884]">Score range</th>
+          <th class="px-4"></th>
+        </tr>
+      </thead>
+      <tbody class="space-y-4">
+        @for (item of tableData(); track $index) {
+          <tr class="grid grid-cols-[1fr_1fr_1fr_10%] lg:grid-cols-4 bg-white">
+            <td class="px-4 py-4 text-[#43474F] font-medium text-xs">{{item.name}}</td>
+            <td class="px-4 py-4 text-[#43474F] font-medium text-xs">{{item.respondents}}</td>
+            <td class="px-4 py-4 text-[#43474F] font-medium text-xs">{{item.rangeStart}}-{{item.rangeEnd}}</td>
+            <td class="px-4 py-4 text-[#43474F] font-medium text-xs flex justify-end items-center">
+              <button>
+                <img src="images/options.svg" alt="table options icon" />
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
   </section>
 </main>
 
