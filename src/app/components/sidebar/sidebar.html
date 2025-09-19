@@ -1,0 +1,16 @@
+<aside class="py-4 bg-white border-r shadow-sm text-center min-h-[90dvh]">
+  <button class="p-2 text-center rounded-full border hover:shadow-sm mb-8">
+    <img src="images/expand-icon.svg" alt="sidebar expand icon" />
+  </button>
+  <nav>
+    <ul class="flex flex-col items-center gap-7 text-center">
+      @for (link of sidebarLinks(); track $index) {
+        <li class="w-full group hover:bg-gray-100 py-4 hover:cursor-pointer">
+          <button class="p-2 text-center">
+            <img [src]="link.image" [alt]="link.title" />
+          </button>
+        </li>
+      }
+    </ul>
+  </nav>
+</aside>

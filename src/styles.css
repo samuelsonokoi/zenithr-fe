@@ -1,2 +1,14 @@
 /* You can add global styles to this file, and also import other style files */
-@import "tailwindcss";
+
+/* Import Angular CDK styles first */
+@import '@angular/cdk/overlay-prebuilt.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
