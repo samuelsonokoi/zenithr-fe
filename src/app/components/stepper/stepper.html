@@ -1,21 +1,83 @@
 <section class="h-[100dvh] relative">
-  <header class="absolute top-0 px-12 py-4 flex justify-between items-center w-full bg-white border-b ">
+  <header class="absolute top-0 px-12 py-4 flex justify-between items-center w-full bg-white border-b">
     <div class="flex flex-col gap-2">
       <p class="text-primary uppercase font-medium text-xs">{{stepperConfig()?.title}}</p>
       <h3 class="text-[#282D39] font-medium text-lg">{{stepperConfig()?.role}}</h3>
     </div>
 
-    <div class=""></div>
+    <div class="flex items-center gap-6">
+      <div class="flex items-center gap-4">
+        <div class="flex items-center gap-2">
+          @for (step of steps; track step; let i = $index) {
+            <div class="flex justify-center items-center gap-2">
+              <button
+                class="w-8 h-8 rounded-full flex justify-center items-center border-2 text-xs font-semibold transition-all duration-200"
+                [class]="getStepClasses(i)"
+                (click)="selectStepByIndex(i)">
+                @if(i < this.selectedIndex){
+                  <img src="images/white-check.svg" alt="white check icon for step complete" />
+                } @else {
+                  <span>{{ i + 1 }}</span>
+                }
+              </button>
+              @if (i === selectedIndex) {
+                <p class="text-[#282D39] text-sm font-medium">
+                  {{ stepperConfig()?.steps?.[i] || 'Step ' + (i + 1) }}
+                </p>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    </div>
   </header>
 
-  <main class="bg-[#f7f7f8] h-full flex justify-center items-center">
-    <app-step>
-      <cdk-step> <p>This is any content of "Step 1"</p> </cdk-step>
-      <cdk-step> <p>This is any content of "Step 2"</p> </cdk-step>
-    </app-step>
+  <!-- Main content area for step content -->
+  <main class="bg-[#f7f7f8] h-full pt-20 pb-16 overflow-y-auto">
+    <div class="max-w-4xl mx-auto p-6">
+      <div [ngTemplateOutlet]="selected ? selected.content : null"></div>
+    </div>
   </main>
 
+  <!-- Footer for additional controls -->
   <footer class="absolute bottom-0 px-12 py-4 bg-white border-t w-full">
-    <p>footer</p>
+    <div class="max-w-4xl mx-auto flex justify-between items-center">
+      @if (canGoPrevious) {
+          <button
+            class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors duration-200"
+            (click)="goToPreviousStep()">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            Previous
+          </button>
+        }
+
+        @if (canGoNext) {
+          <button
+            class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-primary border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors duration-200"
+            (click)="goToNextStep()">
+            Next
+            <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        }
+
+        @if (isLastStep) {
+          <button
+            class="inline-flex items-center px-6 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors duration-200">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+            Complete
+          </button>
+        }
+    </div>
   </footer>
+
+  <!-- Hidden ng-content to capture cdk-step children -->
+  <div style="display: none;">
+    <ng-content></ng-content>
+  </div>
 </section>
