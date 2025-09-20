@@ -1,0 +1,21 @@
+<section class="h-[100dvh] relative">
+  <header class="absolute top-0 px-12 py-4 flex justify-between items-center w-full bg-white border-b ">
+    <div class="flex flex-col gap-2">
+      <p class="text-primary uppercase font-medium text-xs">{{stepperConfig()?.title}}</p>
+      <h3 class="text-[#282D39] font-medium text-lg">{{stepperConfig()?.role}}</h3>
+    </div>
+
+    <div class=""></div>
+  </header>
+
+  <main class="bg-[#f7f7f8] h-full flex justify-center items-center">
+    <app-step>
+      <cdk-step> <p>This is any content of "Step 1"</p> </cdk-step>
+      <cdk-step> <p>This is any content of "Step 2"</p> </cdk-step>
+    </app-step>
+  </main>
+
+  <footer class="absolute bottom-0 px-12 py-4 bg-white border-t w-full">
+    <p>footer</p>
+  </footer>
+</section>
