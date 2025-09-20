@@ -1,7 +1,9 @@
 import { Component, ChangeDetectionStrategy, signal, computed, OnInit } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { CdkStepperModule } from '@angular/cdk/stepper';
 import { ReactiveFormsModule, FormControl, FormGroup, FormArray, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { Stepper } from '../../components/stepper/stepper';
 import { StepperConfig } from '../../core/models/stepper.model';
 import {
@@ -20,20 +22,44 @@ import {
   templateUrl: './new-scenario.html',
 })
 export class NewScenario implements OnInit {
+  constructor(private router: Router) {}
+
   readonly scenarioForm = new FormGroup({
     product: new FormGroup({
       title: new FormControl('', [Validators.required]),
       tenant: new FormControl('', [Validators.required]),
       company: new FormControl('', [Validators.required]),
       experienceProduct: new FormControl('', [Validators.required]),
-      selectedSurveys: new FormArray([])
+      selectedSurveys: new FormArray<FormControl<string>>([])
     }),
     respondents: new FormGroup({
-      total: new FormControl(0)
+      total: new FormControl('', [Validators.required])
     })
   });
 
-  readonly stepperConfig = signal<StepperConfig>({
+  protected get productGroup() {
+    return this.scenarioForm.controls.product as FormGroup;
+  }
+
+  protected get respondentGroup() {
+    return this.scenarioForm.controls.respondents as FormGroup;
+  }
+
+  readonly productGroupStatus = toSignal(this.productGroup.statusChanges, { initialValue: this.productGroup.status });
+  readonly respondentGroupStatus = toSignal(this.respondentGroup.statusChanges, { initialValue: this.respondentGroup.status });
+
+  readonly stepValidations = computed(() => {
+    return [
+      this.productGroupStatus() === 'VALID',
+      this.respondentGroupStatus() === 'VALID',
+      true,
+      true,
+      true,
+      true
+    ];
+  });
+
+  readonly stepperConfig = computed<StepperConfig>(() => ({
     title: 'New Scenario',
     role: 'HR Admin',
     steps: [
@@ -43,8 +69,9 @@ export class NewScenario implements OnInit {
       'Set Impact Drivers',
       'eNPS',
       'Comments'
-    ]
-  });
+    ],
+    stepValidations: this.stepValidations()
+  }));
 
   readonly tenantOptions: TenantOption[] = [
     { id: 'tenant-a', name: 'Tenant A' },
@@ -64,8 +91,8 @@ export class NewScenario implements OnInit {
   ];
 
   private readonly allSurveys = signal<Survey[]>([
-    { id: '1', name: 'Employee Engagement Survey', creationDate: '15/01/2024', startDate: '20/01/2024', endDate: '30/01/2024', selected: true },
-    { id: '2', name: 'Employee Engagement Survey', creationDate: '16/01/2024', startDate: '21/01/2024', endDate: '31/01/2024', selected: true },
+    { id: '1', name: 'Employee Engagement Survey', creationDate: '15/01/2024', startDate: '20/01/2024', endDate: '30/01/2024', selected: false },
+    { id: '2', name: 'Employee Engagement Survey', creationDate: '16/01/2024', startDate: '21/01/2024', endDate: '31/01/2024', selected: false },
     { id: '3', name: 'Employee Engagement Survey', creationDate: '17/01/2024', startDate: '22/01/2024', endDate: '01/02/2024', selected: false },
     { id: '4', name: 'Customer Satisfaction Survey', creationDate: '18/01/2024', startDate: '23/01/2024', endDate: '02/02/2024', selected: false },
     { id: '5', name: 'Team Performance Survey', creationDate: '19/01/2024', startDate: '24/01/2024', endDate: '03/02/2024', selected: false },
@@ -91,7 +118,7 @@ export class NewScenario implements OnInit {
     { id: '25', name: 'Exit Interview Survey', creationDate: '08/02/2024', startDate: '13/02/2024', endDate: '23/02/2024', selected: false }
   ]);
 
-  readonly pagination = signal<SurveyPagination>({
+  protected readonly pagination = signal<SurveyPagination>({
     currentPage: 1,
     totalPages: 3,
     totalSurveys: 25,
@@ -145,11 +172,11 @@ export class NewScenario implements OnInit {
       .filter(survey => survey.selected)
       .map(survey => survey.id);
 
-    const formArray = this.scenarioForm.get('selectedSurveys') as FormArray;
+    const formArray = this.productGroup.get('selectedSurveys') as FormArray<FormControl<string>>;
     formArray.clear();
 
     selectedSurveyIds.forEach(id => {
-      formArray.push(new FormControl(id));
+      formArray.push(new FormControl(id, { nonNullable: true }));
     });
   }
 
@@ -167,34 +194,36 @@ export class NewScenario implements OnInit {
     this.updateSelectedSurveysFormArray();
   }
 
-  isFormValid(): boolean {
-    return this.scenarioForm.valid && this.selectedSurveysCount() > 0;
+  isFormEmpty(): boolean {
+    const productValues = this.productGroup.value;
+    const respondentValues = this.respondentGroup.value;
+
+    const hasProductData = productValues.title || productValues.tenant ||
+                           productValues.company || productValues.experienceProduct ||
+                           (productValues.selectedSurveys && productValues.selectedSurveys.length > 0);
+
+    const hasRespondentData = respondentValues.total;
+
+    return !hasProductData && !hasRespondentData;
   }
 
-  markFormGroupTouched(): void {
-    Object.keys(this.scenarioForm.controls).forEach(key => {
-      const control = this.scenarioForm.get(key);
-      control?.markAsTouched();
-    });
-  }
-
-  getFieldError(fieldName: string): string {
-    const field = this.scenarioForm.get(fieldName);
-    if (field?.errors && field.touched) {
-      if (field.errors['required']) {
-        return `${this.getFieldDisplayName(fieldName)} is required`;
+  onCancel(): void {
+    if (this.isFormEmpty()) {
+      this.router.navigate(['/dashboard']);
+    } else {
+      const confirmed = window.confirm('You have unsaved changes. Are you sure you want to cancel? All changes will be lost.');
+      if (confirmed) {
+        this.resetForm();
+        this.router.navigate(['/dashboard']);
       }
     }
-    return '';
   }
 
-  private getFieldDisplayName(fieldName: string): string {
-    const displayNames: Record<string, string> = {
-      title: 'Title',
-      tenant: 'Tenant',
-      company: 'Company',
-      experienceProduct: 'Experience Product'
-    };
-    return displayNames[fieldName] || fieldName;
+  resetForm(): void {
+    this.scenarioForm.reset();
+    this.allSurveys.update(surveys =>
+      surveys.map(survey => ({ ...survey, selected: false }))
+    );
+    this.updateSelectedSurveysFormArray();
   }
 }

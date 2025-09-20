@@ -1,4 +1,4 @@
-export interface Survey {
+export type Survey = {
   id: string;
   name: string;
   creationDate: string;
@@ -7,23 +7,23 @@ export interface Survey {
   selected: boolean;
 }
 
-export interface TenantOption {
+export type TenantOption = {
   id: string;
   name: string;
 }
 
-export interface CompanyOption {
+export type CompanyOption = {
   id: string;
   name: string;
 }
 
-export interface ExperienceProductOption {
+export type ExperienceProductOption = {
   id: string;
   name: string;
   description?: string;
 }
 
-export interface Scenario {
+export type Scenario = {
   title: string;
   tenant: string;
   company: string;
@@ -31,7 +31,7 @@ export interface Scenario {
   surveys: Survey[];
 }
 
-export interface ScenarioFormData {
+export type ScenarioFormData = {
   title: string;
   tenant: string;
   company: string;
@@ -39,7 +39,7 @@ export interface ScenarioFormData {
   selectedSurveys: string[];
 }
 
-export interface SurveyPagination {
+export type SurveyPagination = {
   currentPage: number;
   totalPages: number;
   totalSurveys: number;

@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { Header } from '../../components/header/header';
 import { Sidebar } from '../../components/sidebar/sidebar';
 import { SidebarLink } from '../../core/models/sidebar.model';
@@ -10,7 +10,7 @@ import { ScenarioTableData } from '../../core/models/scenario-table.model';
   standalone: true,
   imports: [Header, Sidebar, RouterLink],
   templateUrl: './dashboard.html',
-  styles: ``
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class Dashboard {
   protected readonly sidebarLinks = signal<SidebarLink[]>(
