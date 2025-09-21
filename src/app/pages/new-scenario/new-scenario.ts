@@ -17,6 +17,7 @@ import {
   CriteriaGroup,
   CommentGroup,
 } from '../../core/models/scenario.model';
+import { allSurveyData, availableCriteria, companyOptions, criteriaOptions, experienceProductOptions, tenantOptions } from '../../core/data/scenario-options';
 
 @Component({
   selector: 'app-new-scenario',
@@ -34,14 +35,12 @@ export class NewScenario implements OnInit {
       title: new FormControl('', [Validators.required]),
       tenant: new FormControl('', [Validators.required]),
       company: new FormControl('', [Validators.required]),
-      experienceProduct: new FormControl('', [Validators.required]),
-      selectedSurveys: new FormArray<FormControl<string>>([])
+      experienceProduct: new FormControl('', [Validators.required])
     }),
     respondents: new FormGroup({
       total: new FormControl('', [Validators.required])
     }),
     criteria: new FormGroup({
-      selectedCriteria: new FormArray<FormControl<CriteriaType>>([]),
       distributions: new FormArray<FormGroup>([])
     }),
     impactDrivers: new FormGroup({
@@ -121,10 +120,9 @@ export class NewScenario implements OnInit {
       Number(values.transformationalLeadership) || 0
     ];
 
-    // Calculate average of all driver values
     const filledValues = driversValues.filter(value => value > 0);
     const average = filledValues.length > 0 ? filledValues.reduce((sum, value) => sum + value, 0) / filledValues.length : 0;
-    return Math.round(average * 100) / 100; // Round to 2 decimal places
+    return Math.round(average * 100) / 100;
   });
 
 
@@ -138,10 +136,9 @@ export class NewScenario implements OnInit {
       Number(values.detractors) || 0
     ];
 
-    // Calculate average of all eNPS values
     const filledValues = enpsValues.filter(value => value > 0);
     const average = filledValues.length > 0 ? filledValues.reduce((sum, value) => sum + value, 0) / filledValues.length : 0;
-    return Math.round(average * 100) / 100; // Round to 2 decimal places
+    return Math.round(average * 100) / 100;
   });
 
 
@@ -174,92 +171,17 @@ export class NewScenario implements OnInit {
     stepValidations: this.stepValidations()
   }));
 
-  readonly tenantOptions: TenantOption[] = [
-    { id: 'tenant-a', name: 'Tenant A' },
-    { id: 'tenant-b', name: 'Tenant B' },
-    { id: 'tenant-c', name: 'Tenant C' }
-  ];
+  readonly tenantOptions: TenantOption[] = tenantOptions;
 
-  readonly companyOptions: CompanyOption[] = [
-    { id: 'company-a', name: 'Company A' },
-    { id: 'company-b', name: 'Company B' },
-    { id: 'company-c', name: 'Company C' }
-  ];
+  readonly companyOptions: CompanyOption[] = companyOptions;
 
-  readonly experienceProductOptions: ExperienceProductOption[] = [
-    { id: 'tenant-a', name: 'Tenant A', description: 'Primary tenant experience' },
-    { id: 'tenant-b', name: 'Tenant B', description: 'Secondary tenant experience' }
-  ];
+  readonly experienceProductOptions: ExperienceProductOption[] = experienceProductOptions;
 
-  readonly availableCriteria: { type: CriteriaType; name: string }[] = [
-    { type: CriteriaType.AGE_GROUP, name: 'Age Group' },
-    { type: CriteriaType.GENERATION, name: 'Generation' },
-    { type: CriteriaType.DEPARTMENT, name: 'Department' },
-    { type: CriteriaType.GENDER, name: 'Gender' },
-    { type: CriteriaType.LOCATION, name: 'Location' }
-  ];
+  readonly availableCriteria: { type: CriteriaType; name: string }[] = availableCriteria;
 
-  readonly criteriaOptions: Record<CriteriaType, CriteriaOption[]> = {
-    [CriteriaType.GENDER]: [
-      { id: 'male', name: 'Male', type: CriteriaType.GENDER },
-      { id: 'female', name: 'Female', type: CriteriaType.GENDER },
-      { id: 'other', name: 'Other', type: CriteriaType.GENDER }
-    ],
-    [CriteriaType.GENERATION]: [
-      { id: 'gen-z', name: 'Generation Z', type: CriteriaType.GENERATION },
-      { id: 'millennials', name: 'Millennials', type: CriteriaType.GENERATION },
-      { id: 'gen-x', name: 'Generation X', type: CriteriaType.GENERATION },
-      { id: 'boomers', name: 'Baby Boomers', type: CriteriaType.GENERATION }
-    ],
-    [CriteriaType.DEPARTMENT]: [
-      { id: 'engineering', name: 'Engineering', type: CriteriaType.DEPARTMENT },
-      { id: 'hr', name: 'Human Resources', type: CriteriaType.DEPARTMENT },
-      { id: 'marketing', name: 'Marketing', type: CriteriaType.DEPARTMENT },
-      { id: 'sales', name: 'Sales', type: CriteriaType.DEPARTMENT },
-      { id: 'finance', name: 'Finance', type: CriteriaType.DEPARTMENT }
-    ],
-    [CriteriaType.LOCATION]: [
-      { id: 'liverpool', name: 'Liverpool', type: CriteriaType.LOCATION },
-      { id: 'manchester', name: 'Manchester', type: CriteriaType.LOCATION },
-      { id: 'london', name: 'London', type: CriteriaType.LOCATION },
-      { id: 'remote', name: 'Remote', type: CriteriaType.LOCATION }
-    ],
-    [CriteriaType.AGE_GROUP]: [
-      { id: '18-25', name: '18-25', type: CriteriaType.AGE_GROUP },
-      { id: '26-35', name: '26-35', type: CriteriaType.AGE_GROUP },
-      { id: '36-45', name: '36-45', type: CriteriaType.AGE_GROUP },
-      { id: '46-55', name: '46-55', type: CriteriaType.AGE_GROUP },
-      { id: '55+', name: '55+', type: CriteriaType.AGE_GROUP }
-    ]
-  };
+  readonly criteriaOptions: Record<CriteriaType, CriteriaOption[]> = criteriaOptions;
 
-  private readonly allSurveys = signal<Survey[]>([
-    { id: '1', name: 'Employee Engagement Survey', creationDate: '15/01/2024', startDate: '20/01/2024', endDate: '30/01/2024', selected: false },
-    { id: '2', name: 'Employee Engagement Survey', creationDate: '16/01/2024', startDate: '21/01/2024', endDate: '31/01/2024', selected: false },
-    { id: '3', name: 'Employee Engagement Survey', creationDate: '17/01/2024', startDate: '22/01/2024', endDate: '01/02/2024', selected: false },
-    { id: '4', name: 'Customer Satisfaction Survey', creationDate: '18/01/2024', startDate: '23/01/2024', endDate: '02/02/2024', selected: false },
-    { id: '5', name: 'Team Performance Survey', creationDate: '19/01/2024', startDate: '24/01/2024', endDate: '03/02/2024', selected: false },
-    { id: '6', name: 'Workplace Culture Survey', creationDate: '20/01/2024', startDate: '25/01/2024', endDate: '04/02/2024', selected: false },
-    { id: '7', name: 'Leadership Feedback Survey', creationDate: '21/01/2024', startDate: '26/01/2024', endDate: '05/02/2024', selected: false },
-    { id: '8', name: 'Training Effectiveness Survey', creationDate: '22/01/2024', startDate: '27/01/2024', endDate: '06/02/2024', selected: false },
-    { id: '9', name: 'Benefits Satisfaction Survey', creationDate: '23/01/2024', startDate: '28/01/2024', endDate: '07/02/2024', selected: false },
-    { id: '10', name: 'Remote Work Experience Survey', creationDate: '24/01/2024', startDate: '29/01/2024', endDate: '08/02/2024', selected: false },
-    { id: '11', name: 'Communication Assessment Survey', creationDate: '25/01/2024', startDate: '30/01/2024', endDate: '09/02/2024', selected: false },
-    { id: '12', name: 'Work-Life Balance Survey', creationDate: '26/01/2024', startDate: '31/01/2024', endDate: '10/02/2024', selected: false },
-    { id: '13', name: 'Professional Development Survey', creationDate: '27/01/2024', startDate: '01/02/2024', endDate: '11/02/2024', selected: false },
-    { id: '14', name: 'Company Values Alignment Survey', creationDate: '28/01/2024', startDate: '02/02/2024', endDate: '12/02/2024', selected: false },
-    { id: '15', name: 'Technology Usage Survey', creationDate: '29/01/2024', startDate: '03/02/2024', endDate: '13/02/2024', selected: false },
-    { id: '16', name: 'Diversity & Inclusion Survey', creationDate: '30/01/2024', startDate: '04/02/2024', endDate: '14/02/2024', selected: false },
-    { id: '17', name: 'Manager Effectiveness Survey', creationDate: '31/01/2024', startDate: '05/02/2024', endDate: '15/02/2024', selected: false },
-    { id: '18', name: 'Compensation Satisfaction Survey', creationDate: '01/02/2024', startDate: '06/02/2024', endDate: '16/02/2024', selected: false },
-    { id: '19', name: 'Career Growth Opportunities Survey', creationDate: '02/02/2024', startDate: '07/02/2024', endDate: '17/02/2024', selected: false },
-    { id: '20', name: 'Employee Recognition Survey', creationDate: '03/02/2024', startDate: '08/02/2024', endDate: '18/02/2024', selected: false },
-    { id: '21', name: 'Office Environment Survey', creationDate: '04/02/2024', startDate: '09/02/2024', endDate: '19/02/2024', selected: false },
-    { id: '22', name: 'Innovation & Creativity Survey', creationDate: '05/02/2024', startDate: '10/02/2024', endDate: '20/02/2024', selected: false },
-    { id: '23', name: 'Change Management Survey', creationDate: '06/02/2024', startDate: '11/02/2024', endDate: '21/02/2024', selected: false },
-    { id: '24', name: 'Mental Health & Wellness Survey', creationDate: '07/02/2024', startDate: '12/02/2024', endDate: '22/02/2024', selected: false },
-    { id: '25', name: 'Exit Interview Survey', creationDate: '08/02/2024', startDate: '13/02/2024', endDate: '23/02/2024', selected: false }
-  ]);
+  private readonly allSurveys = signal<Survey[]>(allSurveyData);
 
   protected readonly pagination = signal<SurveyPagination>({
     currentPage: 1,
@@ -278,9 +200,6 @@ export class NewScenario implements OnInit {
     return surveys.slice(startIndex, endIndex);
   });
 
-  readonly selectedSurveysCount = computed(() => {
-    return this.allSurveys().filter(survey => survey.selected).length;
-  });
 
   readonly paginationPages = computed(() => {
     const paginationData = this.pagination();
@@ -320,7 +239,7 @@ export class NewScenario implements OnInit {
       if (group.items.length === 0) return false;
 
       return group.items.every(item =>
-        item.criteriaId && item.criteriaId.trim() !== '' && item.percentage > 0
+        item.criteriaId && item.criteriaId.trim() !== '' && item.percentage != null && item.percentage > 0
       );
     });
   });
@@ -337,7 +256,6 @@ export class NewScenario implements OnInit {
           : survey
       )
     );
-    this.updateSelectedSurveysFormArray();
   }
 
   areAllCurrentPageSurveysSelected(): boolean {
@@ -363,21 +281,8 @@ export class NewScenario implements OnInit {
           : survey;
       })
     );
-    this.updateSelectedSurveysFormArray();
   }
 
-  private updateSelectedSurveysFormArray(): void {
-    const selectedSurveyIds = this.allSurveys()
-      .filter(survey => survey.selected)
-      .map(survey => survey.id);
-
-    const formArray = this.productGroup.get('selectedSurveys') as FormArray<FormControl<string>>;
-    formArray.clear();
-
-    selectedSurveyIds.forEach(id => {
-      formArray.push(new FormControl(id, { nonNullable: true }));
-    });
-  }
 
   goToPage(page: number): void {
     const currentPagination = this.pagination();
@@ -390,7 +295,6 @@ export class NewScenario implements OnInit {
   }
 
   ngOnInit(): void {
-    this.updateSelectedSurveysFormArray();
   }
 
 
@@ -399,7 +303,7 @@ export class NewScenario implements OnInit {
 
     const hasProductData = productValues.title || productValues.tenant ||
                            productValues.company || productValues.experienceProduct ||
-                           (productValues.selectedSurveys && productValues.selectedSurveys.length > 0);
+                           this.allSurveys().filter(survey => survey.selected).length > 0;
 
     return !hasProductData;
   }
@@ -420,11 +324,6 @@ export class NewScenario implements OnInit {
     if (this.scenarioForm.valid) {
       const formValue = this.scenarioForm.value;
       console.log('Form submitted with values:', formValue);
-
-      // Here you can emit the form values or call a service to submit the data
-      // For now, we'll just log the values and navigate
-      // this.scenarioService.createScenario(formValue);
-
       this.router.navigate(['/dashboard']);
     } else {
       console.log('Form is invalid. Please check all required fields.');
@@ -504,7 +403,7 @@ export class NewScenario implements OnInit {
           groups[groupIndex].items.push({
             criteriaId,
             criteriaName,
-            percentage: 0
+            percentage: null
           });
         }
       }
@@ -567,6 +466,28 @@ export class NewScenario implements OnInit {
     this.updateDistributionPercentage(criteriaType, criteriaId, percentage);
   }
 
+  public updateDistributionPercentageFromEventByIndex(criteriaType: CriteriaType, itemIndex: number, event: Event): void {
+    const target = event.target as HTMLInputElement;
+    const percentage = Number(target.value) || 0;
+
+    const control = this.getDistributionControlByIndex(criteriaType, itemIndex);
+    if (control) {
+      const percentageControl = control.get('percentage');
+      percentageControl?.setValue(percentage);
+      percentageControl?.markAsTouched();
+    }
+
+    // Also update the signal for UI display
+    this.criteriaGroups.update(groups => {
+      const groupIndex = groups.findIndex(g => g.type === criteriaType);
+      if (groupIndex >= 0 && groups[groupIndex].items[itemIndex]) {
+        groups[groupIndex].items[itemIndex].percentage = percentage;
+        this.updateCriteriaTotalPercentage(criteriaType);
+      }
+      return [...groups];
+    });
+  }
+
   public updateDistributionItem(criteriaType: CriteriaType, itemIndex: number, event: Event): void {
     const target = event.target as HTMLSelectElement;
     const selectedOptionId = target.value;
@@ -574,19 +495,11 @@ export class NewScenario implements OnInit {
     if (selectedOptionId) {
       const option = this.criteriaOptions[criteriaType].find(opt => opt.id === selectedOptionId);
       if (option) {
-        // Update the FormControl value
-        const distributionsArray = this.distributionsArray;
-        const oldCriteriaId = this.criteriaGroups()[this.criteriaGroups().findIndex(g => g.type === criteriaType)]?.items[itemIndex]?.criteriaId;
-
-        if (oldCriteriaId) {
-          const control = distributionsArray.controls.find(control =>
-            control.get('value')?.value === oldCriteriaId
-          );
-          if (control) {
-            const valueControl = control.get('value');
-            valueControl?.setValue(selectedOptionId);
-            valueControl?.markAsTouched();
-          }
+        const control = this.getDistributionControlByIndex(criteriaType, itemIndex);
+        if (control) {
+          const valueControl = control.get('value');
+          valueControl?.setValue(selectedOptionId);
+          valueControl?.markAsTouched();
         }
 
         this.criteriaGroups.update(groups => {
@@ -606,14 +519,13 @@ export class NewScenario implements OnInit {
       const groupIndex = groups.findIndex(g => g.type === criteriaType);
       if (groupIndex >= 0) {
         const items = groups[groupIndex].items;
-        const filledPercentages = items.filter(item => item.percentage > 0).map(item => item.percentage);
+        const filledPercentages = items.filter(item => item.percentage != null && item.percentage > 0).map(item => item.percentage!);
 
-        // Calculate average of filled percentages
         const average = filledPercentages.length > 0
           ? filledPercentages.reduce((sum, percentage) => sum + percentage, 0) / filledPercentages.length
           : 0;
 
-        groups[groupIndex].totalPercentage = Math.round(average * 100) / 100; // Round to 2 decimal places
+        groups[groupIndex].totalPercentage = Math.round(average * 100) / 100;
       }
       return [...groups];
     });
@@ -648,9 +560,8 @@ export class NewScenario implements OnInit {
     if (!group || itemIndex >= group.items.length) return undefined;
 
     const item = group.items[itemIndex];
-    // If item has no criteriaId (new item), find by FormArray index that matches our UI index
+
     if (!item.criteriaId) {
-      // For new items, the FormArray control would be at the corresponding index
       const formArrayIndex = this.getFormArrayIndexForItem(criteriaType, itemIndex);
       return this.distributionsArray.at(formArrayIndex) as FormGroup;
     }
@@ -669,7 +580,6 @@ export class NewScenario implements OnInit {
   }
 
   private getFormArrayIndexForItem(criteriaType: CriteriaType, itemIndex: number): number {
-    // Calculate the FormArray index based on the criteria type and item index
     const groups = this.criteriaGroups();
     let formArrayIndex = 0;
 
@@ -690,8 +600,6 @@ export class NewScenario implements OnInit {
     this.allSurveys.update(surveys =>
       surveys.map(survey => ({ ...survey, selected: false }))
     );
-    this.updateSelectedSurveysFormArray();
     this.criteriaGroups.set([]);
   }
-
 }

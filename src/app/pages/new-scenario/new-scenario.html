@@ -268,14 +268,13 @@
                               <div>
                                 <input
                                   type="number"
-                                  [value]="item.percentage"
-                                  (input)="updateDistributionPercentageFromEvent(criteriaType, item.criteriaId, $event)"
+                                  [value]="item.percentage || ''"
+                                  (input)="updateDistributionPercentageFromEventByIndex(criteriaType, i, $event)"
                                   min="1"
                                   max="100"
                                   [class]="getDistributionPercentageControlByIndex(criteriaType, i)?.invalid && getDistributionPercentageControlByIndex(criteriaType, i)?.touched
                                     ? 'w-16 px-2 py-2 border border-[#FF4530] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'
                                     : 'w-16 px-2 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'"
-                                  placeholder="0"
                                 />
                                 @if (getDistributionPercentageControlByIndex(criteriaType, i)?.invalid && getDistributionPercentageControlByIndex(criteriaType, i)?.touched) {
                                   <div class="mt-1 text-xs text-red-600">

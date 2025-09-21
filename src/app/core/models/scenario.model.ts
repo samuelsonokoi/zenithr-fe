@@ -48,7 +48,7 @@ export type CriteriaOption = {
 export type DistributionItem = {
   criteriaId: string;
   criteriaName: string;
-  percentage: number;
+  percentage: number | null;
 }
 
 export type CriteriaGroup = {
