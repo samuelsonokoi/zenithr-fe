@@ -14,6 +14,7 @@ import { StepperConfig } from '../../core/models/stepper.model';
 export class Stepper extends CdkStepper {
   stepperConfig = input<StepperConfig>();
   cancelClicked = output<void>();
+  finishClicked = output<void>();
 
   selectStepByIndex(index: number): void {
     if (this.canNavigateToStep(index)) {
@@ -98,5 +99,9 @@ export class Stepper extends CdkStepper {
 
   onCancel(): void {
     this.cancelClicked.emit();
+  }
+
+  onFinish(): void {
+    this.finishClicked.emit();
   }
 }

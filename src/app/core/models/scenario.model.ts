@@ -23,25 +23,46 @@ export type ExperienceProductOption = {
   description?: string;
 }
 
-export type Scenario = {
-  title: string;
-  tenant: string;
-  company: string;
-  experienceProduct: string;
-  surveys: Survey[];
-}
-
-export type ScenarioFormData = {
-  title: string;
-  tenant: string;
-  company: string;
-  experienceProduct: string;
-  selectedSurveys: string[];
-}
 
 export type SurveyPagination = {
   currentPage: number;
   totalPages: number;
   totalSurveys: number;
   surveysPerPage: number;
+}
+
+export enum CriteriaType {
+  GENDER = 'gender',
+  GENERATION = 'generation',
+  DEPARTMENT = 'department',
+  LOCATION = 'location',
+  AGE_GROUP = 'ageGroup'
+}
+
+export type CriteriaOption = {
+  id: string;
+  name: string;
+  type: CriteriaType;
+}
+
+export type DistributionItem = {
+  criteriaId: string;
+  criteriaName: string;
+  percentage: number;
+}
+
+export type CriteriaGroup = {
+  type: CriteriaType;
+  name: string;
+  selected: boolean;
+  items: DistributionItem[];
+  totalPercentage: number;
+}
+
+export enum CommentGroup {
+  INNOVATION = 'innovation',
+  MOTIVATION = 'motivation',
+  PERFORMANCE = 'performance',
+  AUTONOMY = 'autonomy',
+  CONNECTION = 'connection',
 }
