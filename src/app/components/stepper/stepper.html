@@ -5,28 +5,36 @@
       <h3 class="text-[#282D39] font-medium text-lg">{{stepperConfig()?.role}}</h3>
     </div>
 
-    <div class="flex items-center lg:gap-4 gap-2">
-          @for (step of steps; track step; let i = $index) {
-            <div class="flex justify-center items-center gap-2">
-              <button
-                class="w-8 h-8 rounded-full flex justify-center items-center border-2 text-xs font-semibold transition-all duration-200"
-                [class]="getStepClasses(i)"
-                [disabled]="isStepDisabled(i)"
-                (click)="selectStepByIndex(i)">
-                @if(i < this.selectedIndex){
-                  <img src="images/white-check.svg" alt="white check icon for step complete" />
-                } @else {
-                  <span>{{ i + 1 }}</span>
-                }
-              </button>
-              @if (i === selectedIndex) {
-                <p class="text-[#282D39] text-sm font-medium">
-                  {{ stepperConfig()?.steps?.[i] || 'Step ' + (i + 1) }}
-                </p>
-              }
-            </div>
+    <div class="flex flex-col gap-2">
+      <div class="flex items-center gap-2 text-base text-[#747884] font-semibold">
+        <span>Step {{ selectedIndex + 1 }} of {{ steps.length }}</span>
+      </div>
+
+      <div class="flex items-center lg:gap-4 gap-2">
+      @for (step of steps; track step; let i = $index) {
+        <div class="flex justify-center items-center gap-2">
+          <button
+            class="w-8 h-8 rounded-full flex justify-center items-center border-2 text-xs font-semibold transition-all duration-200"
+            [class]="getStepClasses(i)"
+            [disabled]="isStepDisabled(i)"
+            [attr.aria-label]="'Step ' + (i + 1) + ': ' + (stepperConfig()?.steps?.[i] || 'Step ' + (i + 1))"
+            [attr.aria-current]="i === selectedIndex ? 'step' : null"
+            (click)="selectStepByIndex(i)">
+            @if(i < this.selectedIndex){
+              <img src="images/white-check.svg" alt="step complete" />
+            } @else {
+              <span>{{ i + 1 }}</span>
+            }
+          </button>
+          @if (i === selectedIndex) {
+            <p class="text-[#282D39] text-sm font-medium lg:block hidden">
+              {{ stepperConfig()?.steps?.[i] || 'Step ' + (i + 1) }}
+            </p>
           }
         </div>
+      }
+    </div>
+    </div>
   </header>
 
   <main class="bg-[#f7f7f8] h-full pt-20 pb-16 overflow-y-auto">
@@ -35,36 +43,42 @@
     </div>
   </main>
 
-  <footer class="absolute bottom-0 px-12 py-4 bg-white border-t w-full">
+  <footer class="absolute bottom-0 lg:px-12 px-6 py-4 bg-white border-t w-full">
     <div class="max-w-4xl mx-auto flex justify-between items-center">
-      <div class="flex items-center">
+      <div class="flex items-center gap-3">
         @if (isFirstStep) {
           <button
             type="button"
-            class="inline-flex items-center px-4 py-2 text-sm font-medium text-[#747884] bg-white transition-colors duration-200"
-            (click)="onCancel()">
+            class="inline-flex items-center px-4 py-2 text-sm font-medium text-[#747884] bg-white hover:text-[#282D39] transition-colors duration-200 rounded-md"
+            (click)="onCancel()"
+            aria-label="Cancel and exit stepper">
             Cancel
           </button>
         }
         @if (canGoPrevious && !isFirstStep) {
           <button
-            class="inline-flex items-center px-4 py-2 text-sm font-medium text-[#747884] bg-white transition-colors duration-200"
-            (click)="goToPreviousStep()">
+            type="button"
+            class="inline-flex items-center px-4 py-2 text-sm font-medium text-[#747884] bg-white hover:bg-gray-50 hover:text-[#282D39] transition-colors duration-200 rounded-md"
+            (click)="goToPreviousStep()"
+            [attr.aria-label]="'Go back to step ' + selectedIndex + ': ' + (stepperConfig()?.steps?.[selectedIndex - 1] || 'Previous step')">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
             </svg>
-            Back
+            Previous
           </button>
         }
       </div>
 
-        @if (canGoNext) {
+      <div class="flex items-center gap-3">
+        @if (canGoNext && !isLastStep) {
           <button
+            type="button"
             [disabled]="!canNavigateToNextStep()"
             [class]="canNavigateToNextStep()
-              ? 'inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-primary border border-transparent rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors duration-200'
-              : 'inline-flex items-center px-4 py-2 text-sm font-medium text-gray-400 bg-gray-200 border border-transparent rounded-md shadow-sm cursor-not-allowed'"
-            (click)="goToNextStep()">
+              ? 'inline-flex items-center px-6 py-2 text-sm font-medium text-white bg-primary border border-transparent rounded-md shadow-sm hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors duration-200'
+              : 'inline-flex items-center px-6 py-2 text-sm font-medium text-gray-400 bg-gray-200 border border-transparent rounded-md shadow-sm cursor-not-allowed'"
+            (click)="goToNextStep()"
+            [attr.aria-label]="canNavigateToNextStep() ? 'Continue to step ' + (selectedIndex + 2) + ': ' + (stepperConfig()?.steps?.[selectedIndex + 1] || 'Next step') : 'Complete current step to continue'">
             Next
             <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
@@ -75,12 +89,23 @@
         @if (isLastStep) {
           <button
             type="button"
+            [disabled]="!canNavigateToNextStep()"
+            [class]="canNavigateToNextStep()
+              ? 'inline-flex gap-2 items-center px-6 py-2 text-sm font-medium text-white bg-primary border border-transparent rounded-md shadow-sm hover:bg-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors duration-200'
+              : 'inline-flex gap-2 items-center px-6 py-2 text-sm font-medium text-gray-400 bg-gray-200 border border-transparent rounded-md shadow-sm cursor-not-allowed'"
             (click)="onFinish()"
-            class="inline-flex gap-2 items-center px-6 py-2 text-sm font-medium text-white bg-primary border border-transparent rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors duration-200">
-            <img src="images/white-check.svg" alt="white check mark icon for the finish button" />
-            Finish
+            aria-label="Complete and submit the form">
+            @if (canNavigateToNextStep()) {
+              <img src="images/white-check.svg" alt="completion checkmark" />
+            } @else {
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            }
+            {{ canNavigateToNextStep() ? 'Submit' : 'Complete Required Fields' }}
           </button>
         }
+      </div>
     </div>
   </footer>
 
