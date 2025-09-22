@@ -236,17 +236,7 @@
             </div>
 
             <div class="space-y-6">
-              @if (selectedCriteriaTypes().length > 0 && criteriaGroup.get('distributions')?.value?.length === 0) {
-                <div class="mt-4 p-4 bg-red-50 border border-red-200 rounded-md" role="alert" aria-live="polite">
-                  <p class="text-sm text-red-700">Please add distribution items for the selected criteria by clicking "+ Add" button.</p>
-                </div>
-              }
 
-              @if (criteriaGroup.get('distributions')?.hasError('duplicateDistributionValue')) {
-                <div class="mt-4 p-4 bg-red-50 border border-red-200 rounded-md" role="alert" aria-live="polite">
-                  <p class="text-sm text-red-700">You cannot add the same criteria value twice. Please remove duplicate entries.</p>
-                </div>
-              }
               @for (criteriaType of selectedCriteriaTypes(); track criteriaType) {
                 @let group = getCriteriaGroup(criteriaType);
                 @if (group) {
@@ -267,6 +257,14 @@
                         + Add
                       </button>
                     </div>
+
+                    @if (group.items.length === 0) {
+                      <p class="mt-4 text-sm text-red-700">Please add distribution items for the selected criteria by clicking "+ Add" button.</p>
+                    }
+
+                    @if (criteriaGroup.get('distributions')?.hasError('duplicateDistributionValue')) {
+                      <p class="mt-4 text-sm text-red-700">You cannot add the same criteria value twice. Please remove duplicate entries.</p>
+                    }
 
                     <div class="space-y-3">
                       @for (item of group.items; track item.criteriaId; let i = $index) {
