@@ -720,7 +720,6 @@ describe('NewScenario Component', () => {
 
   describe('Edge Cases', () => {
     it('should handle operations safely', () => {
-      expect(() => component.ngOnInit()).not.toThrow();
       expect(() => component.toggleSurvey('nonexistent-id')).not.toThrow();
       expect(component.currentPageStartIndex()).toBeGreaterThan(0);
     });

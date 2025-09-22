@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, signal, computed, OnInit, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { CdkStepperModule } from '@angular/cdk/stepper';
 import { ReactiveFormsModule, FormControl, FormGroup, FormArray, Validators } from '@angular/forms';
@@ -26,7 +26,7 @@ import { allSurveyData, availableCriteria, companyOptions, criteriaOptions, expe
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './new-scenario.html',
 })
-export class NewScenario implements OnInit {
+export class NewScenario {
   protected readonly router = inject(Router)
   protected readonly currentCommentSection = signal<CommentGroup>(CommentGroup.INNOVATION);
   protected readonly CommentGroup = CommentGroup;
@@ -294,10 +294,6 @@ export class NewScenario implements OnInit {
     }
   }
 
-  ngOnInit(): void {
-  }
-
-
   isProductGroupEmpty(): boolean {
     const productValues = this.productGroup.value;
 
@@ -323,6 +319,7 @@ export class NewScenario implements OnInit {
   onFinish(): void {
     if (this.scenarioForm.valid) {
       const formValue = this.scenarioForm.value;
+      // FIXME: criteria distributions seems to be having just 1 array when there were more added
       console.log('Form submitted with values:', formValue);
       this.router.navigate(['/dashboard']);
     } else {
