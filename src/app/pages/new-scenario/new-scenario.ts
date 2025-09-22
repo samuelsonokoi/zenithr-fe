@@ -44,17 +44,17 @@ export class NewScenario {
       distributions: new FormArray<FormGroup>([])
     }),
     impactDrivers: new FormGroup({
-      innovation: new FormControl(''),
-      motivation: new FormControl(''),
-      performance: new FormControl(''),
-      autonomy: new FormControl(''),
-      connection: new FormControl(''),
-      transformationalLeadership: new FormControl(''),
+      innovation: new FormControl('', [Validators.min(0), Validators.max(100)]),
+      motivation: new FormControl('', [Validators.min(0), Validators.max(100)]),
+      performance: new FormControl('', [Validators.min(0), Validators.max(100)]),
+      autonomy: new FormControl('', [Validators.min(0), Validators.max(100)]),
+      connection: new FormControl('', [Validators.min(0), Validators.max(100)]),
+      transformationalLeadership: new FormControl('', [Validators.min(0), Validators.max(100)]),
     }),
     enpsSettings: new FormGroup({
-      promoters: new FormControl(''),
-      passives: new FormControl(''),
-      detractors: new FormControl(''),
+      promoters: new FormControl('', [Validators.min(0), Validators.max(100)]),
+      passives: new FormControl('', [Validators.min(0), Validators.max(100)]),
+      detractors: new FormControl('', [Validators.min(0), Validators.max(100)]),
     }),
     comments: new FormGroup({
       innovation: new FormControl(''),
@@ -141,10 +141,7 @@ export class NewScenario {
     return Math.round(average * 100) / 100;
   });
 
-
-
   readonly commentsGroupValid = computed(() => this.commentsGroupStatus() === 'VALID');
-
 
   readonly stepValidations = computed(() => {
     return [
@@ -319,7 +316,6 @@ export class NewScenario {
   onFinish(): void {
     if (this.scenarioForm.valid) {
       const formValue = this.scenarioForm.value;
-      // FIXME: criteria distributions seems to be having just 1 array when there were more added
       console.log('Form submitted with values:', formValue);
       this.router.navigate(['/dashboard']);
     } else {
@@ -354,6 +350,8 @@ export class NewScenario {
       if (existingGroupIndex >= 0) {
         groups[existingGroupIndex].selected = !groups[existingGroupIndex].selected;
         if (!groups[existingGroupIndex].selected) {
+          this.clearCriteriaFromFormArray(criteriaType);
+
           groups[existingGroupIndex].items = [];
           groups[existingGroupIndex].totalPercentage = 0;
         }
@@ -592,8 +590,25 @@ export class NewScenario {
     return formArrayIndex;
   }
 
+  private clearCriteriaFromFormArray(criteriaType: CriteriaType): void {
+    const group = this.getCriteriaGroup(criteriaType);
+    if (!group) return;
+
+    const criteriaIds = group.items.map(item => item.criteriaId);
+
+    for (let i = this.distributionsArray.length - 1; i >= 0; i--) {
+      const control = this.distributionsArray.at(i);
+      const controlValue = control.get('value')?.value;
+
+      if (criteriaIds.includes(controlValue)) {
+        this.distributionsArray.removeAt(i);
+      }
+    }
+  }
+
   resetForm(): void {
     this.scenarioForm.reset();
+    this.distributionsArray.clear();
     this.allSurveys.update(surveys =>
       surveys.map(survey => ({ ...survey, selected: false }))
     );

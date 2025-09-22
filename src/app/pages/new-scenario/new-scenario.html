@@ -352,14 +352,24 @@
             <div class="flex items-center space-x-1">
               <input
                 type="number"
-                min="0"
-                max="100"
                 formControlName="innovation"
-                class="w-full px-2 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center"
+                [class]="impactDriversGroup.controls['innovation'].invalid && impactDriversGroup.controls['innovation'].touched
+                  ? 'w-full px-2 py-2 border border-[#FF4530] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'
+                  : 'w-full px-2 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'"
                 placeholder="0"
               />
               <span class="text-sm text-[#747884]">%</span>
             </div>
+            @if (impactDriversGroup.controls['innovation'].invalid && impactDriversGroup.controls['innovation'].touched) {
+              <div class="mt-1 text-xs text-red-600 px-4">
+                @if (impactDriversGroup.controls['innovation'].hasError('max')) {
+                  Value must be 100 or less
+                }
+                @if (impactDriversGroup.controls['innovation'].hasError('min')) {
+                  Value must be 0 or greater
+                }
+              </div>
+            }
           </div>
           <div class="grid grid-cols-[1fr_20%] bg-[#F1F2F3] gap-2 px-4 py-2">
             <div class="flex justify-start items-center gap-2">
@@ -369,14 +379,24 @@
             <div class="flex items-center space-x-1">
               <input
                 type="number"
-                min="0"
-                max="100"
                 formControlName="motivation"
-                class="w-full px-2 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center"
+                [class]="impactDriversGroup.controls['motivation'].invalid && impactDriversGroup.controls['motivation'].touched
+                  ? 'w-full px-2 py-2 border border-[#FF4530] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'
+                  : 'w-full px-2 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'"
                 placeholder="0"
               />
               <span class="text-sm text-[#747884]">%</span>
             </div>
+            @if (impactDriversGroup.controls['motivation'].invalid && impactDriversGroup.controls['motivation'].touched) {
+              <div class="mt-1 text-xs text-red-600 px-4">
+                @if (impactDriversGroup.controls['motivation'].hasError('max')) {
+                  Value must be 100 or less
+                }
+                @if (impactDriversGroup.controls['motivation'].hasError('min')) {
+                  Value must be 0 or greater
+                }
+              </div>
+            }
           </div>
           <div class="grid grid-cols-[1fr_20%] bg-[#F1F2F3] gap-2 px-4 py-2">
             <div class="flex justify-start items-center gap-2">
@@ -386,14 +406,24 @@
             <div class="flex items-center space-x-1">
               <input
                 type="number"
-                min="0"
-                max="100"
                 formControlName="performance"
-                class="w-full px-2 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center"
+                [class]="impactDriversGroup.controls['performance'].invalid && impactDriversGroup.controls['performance'].touched
+                  ? 'w-full px-2 py-2 border border-[#FF4530] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'
+                  : 'w-full px-2 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'"
                 placeholder="0"
               />
               <span class="text-sm text-[#747884]">%</span>
             </div>
+            @if (impactDriversGroup.controls['performance'].invalid && impactDriversGroup.controls['performance'].touched) {
+              <div class="mt-1 text-xs text-red-600 px-4">
+                @if (impactDriversGroup.controls['performance'].hasError('max')) {
+                  Value must be 100 or less
+                }
+                @if (impactDriversGroup.controls['performance'].hasError('min')) {
+                  Value must be 0 or greater
+                }
+              </div>
+            }
           </div>
           <div class="grid grid-cols-[1fr_20%] bg-[#F1F2F3] gap-2 px-4 py-2">
             <div class="flex justify-start items-center gap-2">
@@ -403,14 +433,24 @@
             <div class="flex items-center space-x-1">
               <input
                 type="number"
-                min="0"
-                max="100"
                 formControlName="autonomy"
-                class="w-full px-2 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center"
+                [class]="impactDriversGroup.controls['autonomy'].invalid && impactDriversGroup.controls['autonomy'].touched
+                  ? 'w-full px-2 py-2 border border-[#FF4530] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'
+                  : 'w-full px-2 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'"
                 placeholder="0"
               />
               <span class="text-sm text-[#747884]">%</span>
             </div>
+            @if (impactDriversGroup.controls['autonomy'].invalid && impactDriversGroup.controls['autonomy'].touched) {
+              <div class="mt-1 text-xs text-red-600 px-4">
+                @if (impactDriversGroup.controls['autonomy'].hasError('max')) {
+                  Value must be 100 or less
+                }
+                @if (impactDriversGroup.controls['autonomy'].hasError('min')) {
+                  Value must be 0 or greater
+                }
+              </div>
+            }
           </div>
           <div class="grid grid-cols-[1fr_20%] bg-[#F1F2F3] gap-2 px-4 py-2">
             <div class="flex justify-start items-center gap-2">
@@ -420,14 +460,24 @@
             <div class="flex items-center space-x-1">
               <input
                 type="number"
-                min="0"
-                max="100"
                 formControlName="connection"
-                class="w-full px-2 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center"
+                [class]="impactDriversGroup.controls['connection'].invalid && impactDriversGroup.controls['connection'].touched
+                  ? 'w-full px-2 py-2 border border-[#FF4530] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'
+                  : 'w-full px-2 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'"
                 placeholder="0"
               />
               <span class="text-sm text-[#747884]">%</span>
             </div>
+            @if (impactDriversGroup.controls['connection'].invalid && impactDriversGroup.controls['connection'].touched) {
+              <div class="mt-1 text-xs text-red-600 px-4">
+                @if (impactDriversGroup.controls['connection'].hasError('max')) {
+                  Value must be 100 or less
+                }
+                @if (impactDriversGroup.controls['connection'].hasError('min')) {
+                  Value must be 0 or greater
+                }
+              </div>
+            }
           </div>
           <div class="grid grid-cols-[1fr_20%] bg-[#F1F2F3] gap-2 px-4 py-2">
             <div class="flex justify-start items-center gap-2">
@@ -437,14 +487,24 @@
             <div class="flex items-center space-x-1">
               <input
                 type="number"
-                min="0"
-                max="100"
                 formControlName="transformationalLeadership"
-                class="w-full px-2 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center"
+                [class]="impactDriversGroup.controls['transformationalLeadership'].invalid && impactDriversGroup.controls['transformationalLeadership'].touched
+                  ? 'w-full px-2 py-2 border border-[#FF4530] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'
+                  : 'w-full px-2 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'"
                 placeholder="0"
               />
               <span class="text-sm text-[#747884]">%</span>
             </div>
+            @if (impactDriversGroup.controls['transformationalLeadership'].invalid && impactDriversGroup.controls['transformationalLeadership'].touched) {
+              <div class="mt-1 text-xs text-red-600 px-4">
+                @if (impactDriversGroup.controls['transformationalLeadership'].hasError('max')) {
+                  Value must be 100 or less
+                }
+                @if (impactDriversGroup.controls['transformationalLeadership'].hasError('min')) {
+                  Value must be 0 or greater
+                }
+              </div>
+            }
           </div>
 
           <div class="items-center justify-between px-4 py-2 grid grid-cols-[1fr_20%]">
@@ -463,7 +523,7 @@
 
         <div class="w-full flex justify-center items-center gap-2 my-8">
           <img src="images/meter-icon.svg" alt="meter icon for enps settings" />
-          <p class="text-[#282D39] text-[40px] font-medium">32%</p>
+          <p class="text-[#282D39] text-[40px] font-medium">{{ enpsSettingsTotal() }}%</p>
         </div>
 
         <div class="mt-8 space-y-2">
@@ -475,14 +535,24 @@
             <div class="flex items-center space-x-1">
               <input
                 type="number"
-                min="0"
-                max="100"
                 formControlName="promoters"
-                class="w-full px-2 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center"
+                [class]="enpsSettingsGroup.controls['promoters'].invalid && enpsSettingsGroup.controls['promoters'].touched
+                  ? 'w-full px-2 py-2 border border-[#FF4530] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'
+                  : 'w-full px-2 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'"
                 placeholder="0"
               />
               <span class="text-sm text-[#747884]">%</span>
             </div>
+            @if (enpsSettingsGroup.controls['promoters'].invalid && enpsSettingsGroup.controls['promoters'].touched) {
+              <div class="mt-1 text-xs text-red-600 px-4">
+                @if (enpsSettingsGroup.controls['promoters'].hasError('max')) {
+                  Value must be 100 or less
+                }
+                @if (enpsSettingsGroup.controls['promoters'].hasError('min')) {
+                  Value must be 0 or greater
+                }
+              </div>
+            }
           </div>
           <div class="grid grid-cols-[1fr_20%] bg-[#F1F2F3] gap-2 px-4 py-2">
             <div class="flex justify-start items-center gap-2">
@@ -494,14 +564,24 @@
             <div class="flex items-center space-x-1">
               <input
                 type="number"
-                min="0"
-                max="100"
                 formControlName="passives"
-                class="w-full px-2 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center"
+                [class]="enpsSettingsGroup.controls['passives'].invalid && enpsSettingsGroup.controls['passives'].touched
+                  ? 'w-full px-2 py-2 border border-[#FF4530] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'
+                  : 'w-full px-2 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'"
                 placeholder="0"
               />
               <span class="text-sm text-[#747884]">%</span>
             </div>
+            @if (enpsSettingsGroup.controls['passives'].invalid && enpsSettingsGroup.controls['passives'].touched) {
+              <div class="mt-1 text-xs text-red-600 px-4">
+                @if (enpsSettingsGroup.controls['passives'].hasError('max')) {
+                  Value must be 100 or less
+                }
+                @if (enpsSettingsGroup.controls['passives'].hasError('min')) {
+                  Value must be 0 or greater
+                }
+              </div>
+            }
           </div>
           <div class="grid grid-cols-[1fr_20%] bg-[#F1F2F3] gap-2 px-4 py-2">
             <div class="flex justify-start items-center gap-2">
@@ -511,14 +591,24 @@
             <div class="flex items-center space-x-1">
               <input
                 type="number"
-                min="0"
-                max="100"
                 formControlName="detractors"
-                class="w-full px-2 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center"
+                [class]="enpsSettingsGroup.controls['detractors'].invalid && enpsSettingsGroup.controls['detractors'].touched
+                  ? 'w-full px-2 py-2 border border-[#FF4530] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'
+                  : 'w-full px-2 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'"
                 placeholder="0"
               />
               <span class="text-sm text-[#747884]">%</span>
             </div>
+            @if (enpsSettingsGroup.controls['detractors'].invalid && enpsSettingsGroup.controls['detractors'].touched) {
+              <div class="mt-1 text-xs text-red-600 px-4">
+                @if (enpsSettingsGroup.controls['detractors'].hasError('max')) {
+                  Value must be 100 or less
+                }
+                @if (enpsSettingsGroup.controls['detractors'].hasError('min')) {
+                  Value must be 0 or greater
+                }
+              </div>
+            }
           </div>
 
           <div class="items-center justify-between px-4 py-2 grid grid-cols-[1fr_20%]">

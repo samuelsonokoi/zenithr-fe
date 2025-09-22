@@ -471,6 +471,19 @@ describe('NewScenario Component', () => {
         component.toggleCriterion(CriteriaType.GENDER);
         expect(component.isCriterionSelected(CriteriaType.GENDER)).toBe(false);
       });
+
+      it('should clear FormArray when toggling off criteria with items', () => {
+        component.toggleCriterion(CriteriaType.GENDER);
+        component.addDistributionItem(CriteriaType.GENDER, 'male', 'Male');
+        component.addDistributionItem(CriteriaType.GENDER, 'female', 'Female');
+
+        expect(component['distributionsArray'].length).toBe(2);
+
+        component.toggleCriterion(CriteriaType.GENDER);
+
+        expect(component['distributionsArray'].length).toBe(0);
+        expect(component.isCriterionSelected(CriteriaType.GENDER)).toBe(false);
+      });
     });
   });
 
@@ -647,6 +660,19 @@ describe('NewScenario Component', () => {
 
         expect(component.scenarioForm.get('product.title')!.value).toBeNull();
         expect(component.currentPageSurveys().every(s => !s.selected)).toBe(true);
+        expect(component['criteriaGroups']()).toEqual([]);
+      });
+
+      it('should clear FormArray when resetting form', () => {
+        component.toggleCriterion(CriteriaType.GENDER);
+        component.addDistributionItem(CriteriaType.GENDER, 'male', 'Male');
+        component.addDistributionItem(CriteriaType.GENDER, 'female', 'Female');
+
+        expect(component['distributionsArray'].length).toBe(2);
+
+        component.resetForm();
+
+        expect(component['distributionsArray'].length).toBe(0);
         expect(component['criteriaGroups']()).toEqual([]);
       });
     });
