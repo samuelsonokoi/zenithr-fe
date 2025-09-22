@@ -35,7 +35,8 @@ export class NewScenario {
       title: new FormControl('', [Validators.required]),
       tenant: new FormControl('', [Validators.required]),
       company: new FormControl('', [Validators.required]),
-      experienceProduct: new FormControl('', [Validators.required])
+      experienceProduct: new FormControl('', [Validators.required]),
+      selectedSurveys: new FormControl([] as string[])
     }),
     respondents: new FormGroup({
       total: new FormControl('', [Validators.required])
@@ -253,6 +254,9 @@ export class NewScenario {
           : survey
       )
     );
+
+    const selectedSurveyIds = this.allSurveys().filter(survey => survey.selected).map(survey => survey.id);
+    this.productGroup.controls['selectedSurveys'].setValue(selectedSurveyIds);
   }
 
   areAllCurrentPageSurveysSelected(): boolean {
@@ -278,6 +282,9 @@ export class NewScenario {
           : survey;
       })
     );
+
+    const selectedSurveyIds = this.allSurveys().filter(survey => survey.selected).map(survey => survey.id);
+    this.productGroup.controls['selectedSurveys'].setValue(selectedSurveyIds);
   }
 
 
