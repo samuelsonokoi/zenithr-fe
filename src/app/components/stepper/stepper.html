@@ -1,4 +1,4 @@
-<section class="h-[100dvh] relative">
+<section class="h-[100dvh] relative" aria-label="Multi-step form">
   <header class="absolute top-0 lg:px-12 px-6 py-4 flex justify-between items-center w-full bg-white border-b lg:flex-row flex-col gap-4 lg:gap-0">
     <div class="flex flex-col gap-2">
       <p class="text-primary uppercase font-medium text-xs">{{stepperConfig()?.title}}</p>
@@ -6,20 +6,25 @@
     </div>
 
     <div class="flex flex-col gap-2">
-      <div class="flex items-center gap-2 text-base text-[#747884] font-semibold">
+      <div class="text-center gap-2 text-base text-[#747884] font-semibold">
         <span>Step {{ selectedIndex + 1 }} of {{ steps.length }}</span>
       </div>
 
-      <div class="flex items-center lg:gap-4 gap-2">
+      <nav aria-label="Form steps" class="flex items-center lg:gap-4 gap-2">
       @for (step of steps; track step; let i = $index) {
         <div class="flex justify-center items-center gap-2">
           <button
+            role="tab"
             class="w-8 h-8 rounded-full flex justify-center items-center border-2 text-xs font-semibold transition-all duration-200"
             [class]="getStepClasses(i)"
             [disabled]="isStepDisabled(i)"
             [attr.aria-label]="'Step ' + (i + 1) + ': ' + (stepperConfig()?.steps?.[i] || 'Step ' + (i + 1))"
-            [attr.aria-current]="i === selectedIndex ? 'step' : null"
-            (click)="selectStepByIndex(i)">
+            [attr.aria-selected]="i === selectedIndex"
+            [attr.aria-controls]="'step-panel-' + i"
+            [attr.tabindex]="i === selectedIndex ? '0' : '-1'"
+            (click)="selectStepByIndex(i)"
+            (keydown.ArrowLeft)="goToPreviousStep()"
+            (keydown.ArrowRight)="goToNextStep()">
             @if(i < this.selectedIndex){
               <img src="images/white-check.svg" alt="step complete" />
             } @else {
@@ -33,13 +38,13 @@
           }
         </div>
       }
-    </div>
+    </nav>
     </div>
   </header>
 
   <main class="bg-[#f7f7f8] h-full pt-20 pb-16 overflow-y-auto">
     <div class="max-w-4xl mx-auto p-6">
-      <div [ngTemplateOutlet]="selected ? selected.content : null"></div>
+      <div role="tabpanel" [attr.id]="'step-panel-' + selectedIndex" [attr.aria-labelledby]="'step-' + selectedIndex" [ngTemplateOutlet]="selected ? selected.content : null"></div>
     </div>
   </main>
 

@@ -16,12 +16,14 @@
             [class]="productGroup.controls['title'].invalid && productGroup.controls['title'].touched
               ? 'w-full px-4 py-2 border border-[#FF4530] focus:outline-none focus:ring-0 rounded-md'
               : 'w-full px-4 py-2 outline-none rounded-md placeholder:text-[#9297A0] text-lg'"
+            [attr.aria-invalid]="productGroup.controls['title'].invalid && productGroup.controls['title'].touched ? 'true' : 'false'"
+            [attr.aria-describedby]="productGroup.controls['title'].invalid && productGroup.controls['title'].touched ? 'title-error' : null"
             placeholder="Scenario title" />
             <img src="images/globe-icon.svg" alt="scenario title globe icon" />
           </div>
           
           @if (productGroup.controls['title'].invalid && productGroup.controls['title'].touched) {
-            <div class="mt-1 text-sm text-red-600" data-test-id="product-title-error">Title is required</div>
+            <div id="title-error" class="mt-1 text-sm text-red-600" data-test-id="product-title-error" role="alert" aria-live="polite">Title is required</div>
           }
         </div>
 
@@ -34,14 +36,16 @@
               data-test-id="product-tenant-select"
               [class]="productGroup.controls['tenant'].invalid && productGroup.controls['tenant'].touched
                 ? 'w-full px-3 py-2 border border-[#FF4530] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-gray-900 text-lg'
-                : 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-gray-900 text-lg'">
+                : 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-gray-900 text-lg'"
+              [attr.aria-invalid]="productGroup.controls['tenant'].invalid && productGroup.controls['tenant'].touched ? 'true' : 'false'"
+              [attr.aria-describedby]="productGroup.controls['tenant'].invalid && productGroup.controls['tenant'].touched ? 'tenant-error' : null">
               <option value="">Choose a tenant...</option>
               @for (tenant of tenantOptions; track tenant.id) {
                 <option [value]="tenant.id">{{ tenant.name }}</option>
               }
             </select>
             @if (productGroup.controls['tenant'].invalid && productGroup.controls['tenant'].touched) {
-              <div class="mt-1 text-sm text-red-600" data-test-id="product-tenant-error">Please select a tenant</div>
+              <div id="tenant-error" class="mt-1 text-sm text-red-600" data-test-id="product-tenant-error" role="alert" aria-live="polite">Please select a tenant</div>
             }
           </div>
 
@@ -53,14 +57,16 @@
               data-test-id="product-company-select"
               [class]="productGroup.controls['company'].invalid && productGroup.controls['company'].touched
                 ? 'w-full px-3 py-2 border border-[#FF4530] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-gray-900 text-lg'
-                : 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-gray-900 text-lg'">
+                : 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-gray-900 text-lg'"
+              [attr.aria-invalid]="productGroup.controls['company'].invalid && productGroup.controls['company'].touched ? 'true' : 'false'"
+              [attr.aria-describedby]="productGroup.controls['company'].invalid && productGroup.controls['company'].touched ? 'company-error' : null">
               <option value="">Choose a company...</option>
               @for (company of companyOptions; track company.id) {
                 <option [value]="company.id">{{ company.name }}</option>
               }
             </select>
             @if (productGroup.controls['company'].invalid && productGroup.controls['company'].touched) {
-              <div class="mt-1 text-sm text-red-600">Please select a company</div>
+              <div id="company-error" class="mt-1 text-sm text-red-600" role="alert" aria-live="polite">Please select a company</div>
             }
           </div>
         </div>
@@ -74,7 +80,9 @@
             <select
             id="experienceProduct"
             formControlName="experienceProduct"
-            class="w-full py-2 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-gray-900 text-lg">
+            class="w-full py-2 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-gray-900 text-lg"
+            [attr.aria-invalid]="productGroup.controls['experienceProduct'].invalid && productGroup.controls['experienceProduct'].touched ? 'true' : 'false'"
+            [attr.aria-describedby]="productGroup.controls['experienceProduct'].invalid && productGroup.controls['experienceProduct'].touched ? 'experience-product-error' : null">
             <option value="">Choose a product...</option>
             @for (product of experienceProductOptions; track product.id) {
               <option [value]="product.id">{{ product.name }}</option>
@@ -82,7 +90,7 @@
           </select>
           </div>
           @if (productGroup.controls['experienceProduct'].invalid && productGroup.controls['experienceProduct'].touched) {
-            <div class="mt-1 text-sm text-red-600">Please select an employee experience product</div>
+            <div id="experience-product-error" class="mt-1 text-sm text-red-600" role="alert" aria-live="polite">Please select an employee experience product</div>
           }
         </div>
 
@@ -91,21 +99,22 @@
         </div>
 
         <div class="bg-white rounded-lg border border-gray-200 overflow-y-scroll">
-          <table class="w-full">
+          <table class="w-full" role="table" aria-label="Survey selection table">
             <thead class="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
                   <input
                     type="checkbox"
                     [checked]="areAllCurrentPageSurveysSelected()"
                     [indeterminate]="areSomeCurrentPageSurveysSelected()"
                     (change)="toggleAllCurrentPageSurveys()"
-                    class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary">
+                    class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
+                    aria-label="Select all surveys on current page">
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">NAME</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CREATION DATE</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">START DATE</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">END DATE</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">NAME</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CREATION DATE</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">START DATE</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">END DATE</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-200">
@@ -116,7 +125,8 @@
                       type="checkbox"
                       [checked]="survey.selected"
                       (change)="toggleSurvey(survey.id)"
-                      class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary">
+                      class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
+                      [attr.aria-label]="'Select survey: ' + survey.name">
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap">
                     <div class="text-sm font-medium text-gray-900">{{ survey.name }}</div>
@@ -137,10 +147,10 @@
         </div>
 
         <div class="flex flex-col lg:flex-row gap-2 items-center justify-between mt-6">
-          <div class="text-sm text-gray-700">
+          <div class="text-sm text-gray-700" id="pagination-info" aria-live="polite">
             Showing {{ currentPageStartIndex() }} - {{ currentPageEndIndex() }} of {{ pagination().totalSurveys }} surveys
           </div>
-          <div class="flex gap-1">
+          <nav aria-label="Survey pagination" class="flex gap-1">
             @for (page of paginationPages(); track page) {
               <button
                 type="button"
@@ -148,13 +158,15 @@
                 [class]="page === pagination().currentPage
                   ? 'bg-primary text-white'
                   : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'"
-                class="px-3 py-2 text-sm font-medium rounded transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+                class="px-3 py-2 text-sm font-medium rounded transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                [attr.aria-label]="page === pagination().currentPage ? 'Current page, page ' + page : 'Go to page ' + page"
+                [attr.aria-current]="page === pagination().currentPage ? 'page' : null">
                 {{ page }}
               </button>
             }
-          </div>
+          </nav>
           <div class="flex items-center space-x-2">
-            <span class="text-sm text-gray-500 mr-3">Page {{ pagination().currentPage }} of {{ pagination().totalPages }}</span>
+            <span class="text-sm text-gray-500 mr-3" aria-describedby="pagination-info">Page {{ pagination().currentPage }} of {{ pagination().totalPages }}</span>
           </div>
         </div>
       </div>
@@ -177,12 +189,14 @@
             [class]="respondentGroup.controls['total'].invalid && respondentGroup.controls['total'].touched
               ? 'w-full px-4 py-2 border border-[#FF4530] focus:outline-none focus:ring-0 rounded-md'
               : 'w-full px-4 py-2 outline-none rounded-md placeholder:text-[#9297A0] text-lg'"
+            [attr.aria-invalid]="respondentGroup.controls['total'].invalid && respondentGroup.controls['total'].touched ? 'true' : 'false'"
+            [attr.aria-describedby]="respondentGroup.controls['total'].invalid && respondentGroup.controls['total'].touched ? 'total-error' : null"
             placeholder="Number of respondents" />
             <img src="images/globe-icon.svg" alt="scenario title globe icon" />
           </div>
           
           @if (respondentGroup.controls['total'].invalid && respondentGroup.controls['total'].touched) {
-            <div class="mt-1 text-sm text-red-600">Total number of respondents is required</div>
+            <div id="total-error" class="mt-1 text-sm text-red-600" role="alert" aria-live="polite">Total number of respondents is required</div>
           }
         </div>
       </div>
@@ -236,6 +250,7 @@
                         type="button"
                         (click)="addDistributionItem(criteriaType, '', '')"
                         class="text-primary text-sm"
+                        [attr.aria-label]="'Add new ' + group.name.toLowerCase() + ' criteria'"
                       >
                         + Add {{ group.name }}
                       </button>
@@ -245,7 +260,7 @@
                       @for (item of group.items; track item.criteriaId; let i = $index) {
                         <div>
                           <div class="flex items-center gap-4">
-                            <button type="button">
+                            <button type="button" aria-label="Drag to reorder criteria item" tabindex="-1">
                               <img src="images/drag-handle.svg" alt="drag icon for criteria" />
                             </button>
 
@@ -297,6 +312,7 @@
                               type="button"
                               (click)="removeDistributionItem(criteriaType, item.criteriaId)"
                               class="w-6 h-6 flex justify-center items-center bg-[#FF45301A] rounded-sm"
+                              [attr.aria-label]="'Remove ' + group.name.toLowerCase() + ' criteria'"
                             >
                               <img src="images/red-trash-icon.svg" alt="red trash icon for criteria control delete" />
                             </button>
@@ -333,12 +349,12 @@
     </cdk-step>
 
     <cdk-step>
-      <div class="rounded-lg lg:max-w-5xl w-full mx-auto lg:py-8 py-16" formGroupName="impactDrivers">
-        <h3 class="text-lg font-medium text-[#282D39]">Set the impact drivers</h3>
+      <fieldset class="rounded-lg lg:max-w-5xl w-full mx-auto lg:py-8 py-16" formGroupName="impactDrivers">
+        <legend class="text-lg font-medium text-[#282D39]">Set the impact drivers</legend>
         <p class="text-[#747884] text-xs mt-3">Distribute the weightage (in percentages) for different factors. The total should sum up to 100%. The system will calculate the Overall Score dynamically based on the provided values</p>
 
-        <div class="mt-8 space-y-2">
-          <div class="grid grid-cols-[1fr_20%] gap-2 px-4 py-2">
+        <div class="mt-8 space-y-2" aria-labelledby="impact-drivers-heading">
+          <div id="impact-drivers-heading" class="grid grid-cols-[1fr_20%] gap-2 px-4 py-2">
             <p class="font-semibold text-xs uppercase text-[#747884]">Drivers</p>
             <div class="text-center">
               <p class="font-semibold text-xs uppercase text-[#747884]">AVG.</p>
@@ -359,12 +375,15 @@
                   [class]="impactDriversGroup.controls['innovation'].invalid && impactDriversGroup.controls['innovation'].touched
                     ? 'w-full px-2 py-2 border border-[#FF4530] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'
                     : 'w-full px-2 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'"
+                  [attr.aria-invalid]="impactDriversGroup.controls['innovation'].invalid && impactDriversGroup.controls['innovation'].touched ? 'true' : 'false'"
+                  [attr.aria-describedby]="impactDriversGroup.controls['innovation'].invalid && impactDriversGroup.controls['innovation'].touched ? 'innovation-error' : null"
+                  aria-label="Innovation percentage (0-100)"
                   placeholder="0"
                 />
                 <span class="text-sm text-[#747884]">%</span>
               </div>
               @if (impactDriversGroup.controls['innovation'].invalid && impactDriversGroup.controls['innovation'].touched) {
-              <div class="mt-1 text-xs text-red-600">
+              <div id="innovation-error" class="mt-1 text-xs text-red-600" role="alert" aria-live="polite">
                 @if (impactDriversGroup.controls['innovation'].hasError('max')) {
                   Value must be 100 or less
                 }
@@ -390,12 +409,15 @@
                   [class]="impactDriversGroup.controls['motivation'].invalid && impactDriversGroup.controls['motivation'].touched
                     ? 'w-full px-2 py-2 border border-[#FF4530] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'
                     : 'w-full px-2 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'"
+                  [attr.aria-invalid]="impactDriversGroup.controls['motivation'].invalid && impactDriversGroup.controls['motivation'].touched ? 'true' : 'false'"
+                  [attr.aria-describedby]="impactDriversGroup.controls['motivation'].invalid && impactDriversGroup.controls['motivation'].touched ? 'motivation-error' : null"
+                  aria-label="Motivation percentage (0-100)"
                   placeholder="0"
                 />
                 <span class="text-sm text-[#747884]">%</span>
               </div>
               @if (impactDriversGroup.controls['motivation'].invalid && impactDriversGroup.controls['motivation'].touched) {
-              <div class="mt-1 text-xs text-red-600">
+              <div id="motivation-error" class="mt-1 text-xs text-red-600" role="alert" aria-live="polite">
                 @if (impactDriversGroup.controls['motivation'].hasError('max')) {
                   Value must be 100 or less
                 }
@@ -421,12 +443,15 @@
                   [class]="impactDriversGroup.controls['performance'].invalid && impactDriversGroup.controls['performance'].touched
                     ? 'w-full px-2 py-2 border border-[#FF4530] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'
                     : 'w-full px-2 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'"
+                  [attr.aria-invalid]="impactDriversGroup.controls['performance'].invalid && impactDriversGroup.controls['performance'].touched ? 'true' : 'false'"
+                  [attr.aria-describedby]="impactDriversGroup.controls['performance'].invalid && impactDriversGroup.controls['performance'].touched ? 'performance-error' : null"
+                  aria-label="Performance percentage (0-100)"
                   placeholder="0"
                 />
                 <span class="text-sm text-[#747884]">%</span>
               </div>
               @if (impactDriversGroup.controls['performance'].invalid && impactDriversGroup.controls['performance'].touched) {
-              <div class="mt-1 text-xs text-red-600">
+              <div id="performance-error" class="mt-1 text-xs text-red-600" role="alert" aria-live="polite">
                 @if (impactDriversGroup.controls['performance'].hasError('max')) {
                   Value must be 100 or less
                 }
@@ -452,12 +477,15 @@
                   [class]="impactDriversGroup.controls['autonomy'].invalid && impactDriversGroup.controls['autonomy'].touched
                     ? 'w-full px-2 py-2 border border-[#FF4530] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'
                     : 'w-full px-2 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'"
+                  [attr.aria-invalid]="impactDriversGroup.controls['autonomy'].invalid && impactDriversGroup.controls['autonomy'].touched ? 'true' : 'false'"
+                  [attr.aria-describedby]="impactDriversGroup.controls['autonomy'].invalid && impactDriversGroup.controls['autonomy'].touched ? 'autonomy-error' : null"
+                  aria-label="Autonomy percentage (0-100)"
                   placeholder="0"
                 />
                 <span class="text-sm text-[#747884]">%</span>
               </div>
               @if (impactDriversGroup.controls['autonomy'].invalid && impactDriversGroup.controls['autonomy'].touched) {
-              <div class="mt-1 text-xs text-red-600">
+              <div id="autonomy-error" class="mt-1 text-xs text-red-600" role="alert" aria-live="polite">
                 @if (impactDriversGroup.controls['autonomy'].hasError('max')) {
                   Value must be 100 or less
                 }
@@ -483,12 +511,15 @@
                   [class]="impactDriversGroup.controls['connection'].invalid && impactDriversGroup.controls['connection'].touched
                     ? 'w-full px-2 py-2 border border-[#FF4530] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'
                     : 'w-full px-2 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'"
+                  [attr.aria-invalid]="impactDriversGroup.controls['connection'].invalid && impactDriversGroup.controls['connection'].touched ? 'true' : 'false'"
+                  [attr.aria-describedby]="impactDriversGroup.controls['connection'].invalid && impactDriversGroup.controls['connection'].touched ? 'connection-error' : null"
+                  aria-label="Connection percentage (0-100)"
                   placeholder="0"
                 />
                 <span class="text-sm text-[#747884]">%</span>
               </div>
               @if (impactDriversGroup.controls['connection'].invalid && impactDriversGroup.controls['connection'].touched) {
-              <div class="mt-1 text-xs text-red-600">
+              <div id="connection-error" class="mt-1 text-xs text-red-600" role="alert" aria-live="polite">
                 @if (impactDriversGroup.controls['connection'].hasError('max')) {
                   Value must be 100 or less
                 }
@@ -514,12 +545,15 @@
                   [class]="impactDriversGroup.controls['transformationalLeadership'].invalid && impactDriversGroup.controls['transformationalLeadership'].touched
                     ? 'w-full px-2 py-2 border border-[#FF4530] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'
                     : 'w-full px-2 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'"
+                  [attr.aria-invalid]="impactDriversGroup.controls['transformationalLeadership'].invalid && impactDriversGroup.controls['transformationalLeadership'].touched ? 'true' : 'false'"
+                  [attr.aria-describedby]="impactDriversGroup.controls['transformationalLeadership'].invalid && impactDriversGroup.controls['transformationalLeadership'].touched ? 'transformational-leadership-error' : null"
+                  aria-label="Transformational Leadership percentage (0-100)"
                   placeholder="0"
                 />
                 <span class="text-sm text-[#747884]">%</span>
               </div>
               @if (impactDriversGroup.controls['transformationalLeadership'].invalid && impactDriversGroup.controls['transformationalLeadership'].touched) {
-              <div class="mt-1 text-xs text-red-600">
+              <div id="transformational-leadership-error" class="mt-1 text-xs text-red-600" role="alert" aria-live="polite">
                 @if (impactDriversGroup.controls['transformationalLeadership'].hasError('max')) {
                   Value must be 100 or less
                 }
@@ -533,24 +567,24 @@
 
           <div class="items-center justify-between px-4 py-2 grid grid-cols-[1fr_20%]">
             <span class="text-sm font-medium text-[#5B616C] uppercase">Overall Score</span>
-            <span class="text-sm font-medium px-4 py-2 border border-[#E4E5E7] rounded-md bg-white text-[#5B616C] w-full text-center">
+            <span class="text-sm font-medium px-4 py-2 border border-[#E4E5E7] rounded-md bg-white text-[#5B616C] w-full text-center" aria-live="polite" aria-label="Overall impact drivers score">
               {{ impactDriversTotal() }}%
             </span>
           </div>
         </div>
-      </div>
+      </fieldset>
     </cdk-step>
 
     <cdk-step>
-      <div class="rounded-lg lg:max-w-5xl w-full mx-auto lg:py-8 py-16" formGroupName="enpsSettings">
-        <h3 class="text-lg font-medium text-[#282D39]">Configure eNPS Settings</h3>
+      <fieldset class="rounded-lg lg:max-w-5xl w-full mx-auto lg:py-8 py-16" formGroupName="enpsSettings">
+        <legend class="text-lg font-medium text-[#282D39]">Configure eNPS Settings</legend>
 
-        <div class="w-full flex justify-center items-center gap-2 my-8">
+        <div id="enps-settings-heading" class="w-full flex justify-center items-center gap-2 my-8">
           <img src="images/meter-icon.svg" alt="meter icon for enps settings" />
-          <p class="text-[#282D39] text-[40px] font-medium">{{ enpsSettingsTotal() }}%</p>
+          <p class="text-[#282D39] text-[40px] font-medium" aria-live="polite" aria-label="eNPS total percentage">{{ enpsSettingsTotal() }}%</p>
         </div>
 
-        <div class="mt-8 space-y-2">
+        <div class="mt-8 space-y-2" aria-labelledby="enps-settings-heading">
           <div class="grid grid-cols-[1fr_20%] bg-[#F1F2F3] gap-2 px-4 py-2">
             <div class="flex justify-start items-center gap-2">
               <p class="bg-[#3fb75b] rounded-md px-4 py-1 w-8 h-8"></p>
@@ -566,12 +600,15 @@
                   [class]="enpsSettingsGroup.controls['promoters'].invalid && enpsSettingsGroup.controls['promoters'].touched
                     ? 'w-full px-2 py-2 border border-[#FF4530] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'
                     : 'w-full px-2 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'"
+                  [attr.aria-invalid]="enpsSettingsGroup.controls['promoters'].invalid && enpsSettingsGroup.controls['promoters'].touched ? 'true' : 'false'"
+                  [attr.aria-describedby]="enpsSettingsGroup.controls['promoters'].invalid && enpsSettingsGroup.controls['promoters'].touched ? 'promoters-error' : null"
+                  aria-label="Promoters percentage (0-100)"
                   placeholder="0"
                 />
                 <span class="text-sm text-[#747884]">%</span>
               </div>
               @if (enpsSettingsGroup.controls['promoters'].invalid && enpsSettingsGroup.controls['promoters'].touched) {
-              <div class="mt-1 text-xs text-red-600">
+              <div id="promoters-error" class="mt-1 text-xs text-red-600" role="alert" aria-live="polite">
                 @if (enpsSettingsGroup.controls['promoters'].hasError('max')) {
                   Value must be 100 or less
                 }
@@ -599,12 +636,15 @@
                   [class]="enpsSettingsGroup.controls['passives'].invalid && enpsSettingsGroup.controls['passives'].touched
                     ? 'w-full px-2 py-2 border border-[#FF4530] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'
                     : 'w-full px-2 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'"
+                  [attr.aria-invalid]="enpsSettingsGroup.controls['passives'].invalid && enpsSettingsGroup.controls['passives'].touched ? 'true' : 'false'"
+                  [attr.aria-describedby]="enpsSettingsGroup.controls['passives'].invalid && enpsSettingsGroup.controls['passives'].touched ? 'passives-error' : null"
+                  aria-label="Passives percentage (0-100)"
                   placeholder="0"
                 />
                 <span class="text-sm text-[#747884]">%</span>
               </div>
               @if (enpsSettingsGroup.controls['passives'].invalid && enpsSettingsGroup.controls['passives'].touched) {
-              <div class="mt-1 text-xs text-red-600">
+              <div id="passives-error" class="mt-1 text-xs text-red-600" role="alert" aria-live="polite">
                 @if (enpsSettingsGroup.controls['passives'].hasError('max')) {
                   Value must be 100 or less
                 }
@@ -630,12 +670,15 @@
                   [class]="enpsSettingsGroup.controls['detractors'].invalid && enpsSettingsGroup.controls['detractors'].touched
                     ? 'w-full px-2 py-2 border border-[#FF4530] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'
                     : 'w-full px-2 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'"
+                  [attr.aria-invalid]="enpsSettingsGroup.controls['detractors'].invalid && enpsSettingsGroup.controls['detractors'].touched ? 'true' : 'false'"
+                  [attr.aria-describedby]="enpsSettingsGroup.controls['detractors'].invalid && enpsSettingsGroup.controls['detractors'].touched ? 'detractors-error' : null"
+                  aria-label="Detractors percentage (0-100)"
                   placeholder="0"
                 />
                 <span class="text-sm text-[#747884]">%</span>
               </div>
               @if (enpsSettingsGroup.controls['detractors'].invalid && enpsSettingsGroup.controls['detractors'].touched) {
-              <div class="mt-1 text-xs text-red-600">
+              <div id="detractors-error" class="mt-1 text-xs text-red-600" role="alert" aria-live="polite">
                 @if (enpsSettingsGroup.controls['detractors'].hasError('max')) {
                   Value must be 100 or less
                 }
@@ -649,12 +692,12 @@
 
           <div class="items-center justify-between px-4 py-2 grid grid-cols-[1fr_20%]">
             <span class="text-sm font-medium text-[#5B616C] uppercase">Total</span>
-            <span class="text-sm font-medium px-4 py-2 border border-[#E4E5E7] rounded-md bg-white text-[#5B616C] w-full text-center">
+            <span class="text-sm font-medium px-4 py-2 border border-[#E4E5E7] rounded-md bg-white text-[#5B616C] w-full text-center" aria-live="polite" aria-label="eNPS settings total">
               {{ enpsSettingsTotal() }}%
             </span>
           </div>
         </div>
-      </div>
+      </fieldset>
     </cdk-step>
 
     <cdk-step>
