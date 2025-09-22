@@ -346,7 +346,7 @@ describe('NewScenario Component', () => {
       });
 
       it('should remove item from criteria group and FormArray', () => {
-        component.removeDistributionItem(CriteriaType.GENDER, 'male');
+        component.removeDistributionItem(CriteriaType.GENDER, 0); // Remove first item (male)
 
         const criteriaGroup = component.getCriteriaGroup(CriteriaType.GENDER);
         expect(criteriaGroup!.items).toHaveLength(1);
@@ -355,7 +355,7 @@ describe('NewScenario Component', () => {
       });
 
       it('should handle removing non-existent item gracefully', () => {
-        component.removeDistributionItem(CriteriaType.GENDER, 'nonexistent');
+        component.removeDistributionItem(CriteriaType.GENDER, 999); // Invalid index
 
         const criteriaGroup = component.getCriteriaGroup(CriteriaType.GENDER);
         expect(criteriaGroup!.items).toHaveLength(2);
@@ -739,7 +739,8 @@ describe('NewScenario Component', () => {
         component.updateDistributionItem(CriteriaType.GENDER, 0, event);
 
         const criteriaGroup = component.getCriteriaGroup(CriteriaType.GENDER);
-        expect(criteriaGroup!.items[0].criteriaId).toBe('male'); // Should remain unchanged
+        expect(criteriaGroup!.items[0].criteriaId).toBe(''); // Should be cleared when empty option selected
+        expect(criteriaGroup!.items[0].criteriaName).toBe(''); // Should be cleared when empty option selected
       });
     });
   });
@@ -751,7 +752,7 @@ describe('NewScenario Component', () => {
     });
 
     it('should handle criteria operations on non-existent types', () => {
-      expect(() => component.removeDistributionItem(CriteriaType.GENDER, 'nonexistent')).not.toThrow();
+      expect(() => component.removeDistributionItem(CriteriaType.GENDER, 999)).not.toThrow();
       expect(() => component.updateDistributionPercentage(CriteriaType.GENDER, 'nonexistent', 50)).not.toThrow();
     });
 

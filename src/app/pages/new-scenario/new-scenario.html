@@ -185,6 +185,7 @@
             <input
             id="total"
             type="number"
+            min="0"
             formControlName="total"
             [class]="respondentGroup.controls['total'].invalid && respondentGroup.controls['total'].touched
               ? 'w-full px-4 py-2 border border-[#FF4530] focus:outline-none focus:ring-0 rounded-md'
@@ -235,6 +236,17 @@
             </div>
 
             <div class="space-y-6">
+              @if (selectedCriteriaTypes().length > 0 && criteriaGroup.get('distributions')?.value?.length === 0) {
+                <div class="mt-4 p-4 bg-red-50 border border-red-200 rounded-md" role="alert" aria-live="polite">
+                  <p class="text-sm text-red-700">Please add distribution items for the selected criteria by clicking "+ Add" button.</p>
+                </div>
+              }
+
+              @if (criteriaGroup.get('distributions')?.hasError('duplicateDistributionValue')) {
+                <div class="mt-4 p-4 bg-red-50 border border-red-200 rounded-md" role="alert" aria-live="polite">
+                  <p class="text-sm text-red-700">You cannot add the same criteria value twice. Please remove duplicate entries.</p>
+                </div>
+              }
               @for (criteriaType of selectedCriteriaTypes(); track criteriaType) {
                 @let group = getCriteriaGroup(criteriaType);
                 @if (group) {
@@ -252,7 +264,7 @@
                         class="text-primary text-sm"
                         [attr.aria-label]="'Add new ' + group.name.toLowerCase() + ' criteria'"
                       >
-                        + Add {{ group.name }}
+                        + Add
                       </button>
                     </div>
 
@@ -268,6 +280,7 @@
                               <select
                                 [value]="item.criteriaId"
                                 (change)="updateDistributionItem(criteriaType, i, $event)"
+                                (blur)="markDistributionValueAsTouched(criteriaType, i)"
                                 [class]="getDistributionValueControlByIndex(criteriaType, i)?.invalid && getDistributionValueControlByIndex(criteriaType, i)?.touched
                                   ? 'w-full px-3 py-2 border border-[#FF4530] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0]'
                                   : 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0]'"
@@ -297,10 +310,13 @@
                                 @if (getDistributionPercentageControlByIndex(criteriaType, i)?.invalid && getDistributionPercentageControlByIndex(criteriaType, i)?.touched) {
                                   <div class="mt-1 text-xs text-red-600">
                                     @if (getDistributionPercentageControlByIndex(criteriaType, i)?.hasError('required')) {
-                                      Percentage required
+                                      Required
                                     }
                                     @if (getDistributionPercentageControlByIndex(criteriaType, i)?.hasError('min')) {
-                                      Min value is 1
+                                      Min is 0
+                                    }
+                                    @if (getDistributionPercentageControlByIndex(criteriaType, i)?.hasError('max')) {
+                                      Max is 100
                                     }
                                   </div>
                                 }
@@ -310,7 +326,7 @@
 
                             <button
                               type="button"
-                              (click)="removeDistributionItem(criteriaType, item.criteriaId)"
+                              (click)="removeDistributionItem(criteriaType, i)"
                               class="w-6 h-6 flex justify-center items-center bg-[#FF45301A] rounded-sm"
                               [attr.aria-label]="'Remove ' + group.name.toLowerCase() + ' criteria'"
                             >

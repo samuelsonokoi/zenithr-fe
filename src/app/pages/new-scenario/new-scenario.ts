@@ -18,6 +18,7 @@ import {
   CommentGroup,
 } from '../../core/models/scenario.model';
 import { allSurveyData, availableCriteria, companyOptions, criteriaOptions, experienceProductOptions, tenantOptions } from '../../core/data/scenario-options';
+import { duplicateDistributionValueValidator } from '../../core/validators/custom.validators';
 
 @Component({
   selector: 'app-new-scenario',
@@ -39,10 +40,10 @@ export class NewScenario {
       selectedSurveys: new FormControl([] as string[])
     }),
     respondents: new FormGroup({
-      total: new FormControl('', [Validators.required])
+      total: new FormControl('', [Validators.required, Validators.min(0)])
     }),
     criteria: new FormGroup({
-      distributions: new FormArray<FormGroup>([])
+      distributions: new FormArray<FormGroup>([], [duplicateDistributionValueValidator()])
     }),
     impactDrivers: new FormGroup({
       innovation: new FormControl('', [Validators.min(0), Validators.max(100)]),
@@ -242,6 +243,9 @@ export class NewScenario {
     });
   });
 
+  constructor() {
+  }
+
   protected setCurrentComment(section: CommentGroup) {
     this.currentCommentSection.set(section);
   }
@@ -374,12 +378,13 @@ export class NewScenario {
       }
       return [...groups];
     });
+
   }
 
   private createDistributionFormGroup(criteriaId: string = '', percentage: number | null = null): FormGroup {
     return new FormGroup({
       value: new FormControl(criteriaId, [Validators.required]),
-      percentage: new FormControl(percentage, [Validators.required, Validators.min(1)])
+      percentage: new FormControl(percentage, [Validators.required, Validators.min(0), Validators.max(100)])
     });
   }
 
@@ -413,22 +418,23 @@ export class NewScenario {
     });
   }
 
-  removeDistributionItem(criteriaType: CriteriaType, criteriaId: string): void {
-    // Remove from FormArray
-    const distributionsArray = this.distributionsArray;
-    const controlIndex = distributionsArray.controls.findIndex(control =>
-      control.get('value')?.value === criteriaId
-    );
+  removeDistributionItem(criteriaType: CriteriaType, itemIndex: number): void {
+    const group = this.getCriteriaGroup(criteriaType);
+    if (!group || itemIndex >= group.items.length) return;
 
-    if (controlIndex !== -1) {
-      distributionsArray.removeAt(controlIndex);
+    // Remove from FormArray using the FormArray index
+    const formArrayIndex = this.getFormArrayIndexForItem(criteriaType, itemIndex);
+    const distributionsArray = this.distributionsArray;
+
+    if (formArrayIndex !== -1 && formArrayIndex < distributionsArray.length) {
+      distributionsArray.removeAt(formArrayIndex);
     }
 
     // Also update the signal for UI display
     this.criteriaGroups.update(groups => {
       const groupIndex = groups.findIndex(g => g.type === criteriaType);
       if (groupIndex >= 0) {
-        groups[groupIndex].items = groups[groupIndex].items.filter(item => item.criteriaId !== criteriaId);
+        groups[groupIndex].items.splice(itemIndex, 1);
         this.updateCriteriaTotalPercentage(criteriaType);
       }
       return [...groups];
@@ -494,16 +500,17 @@ export class NewScenario {
     const target = event.target as HTMLSelectElement;
     const selectedOptionId = target.value;
 
+    // Always mark as touched when value changes
+    const control = this.getDistributionControlByIndex(criteriaType, itemIndex);
+    if (control) {
+      const valueControl = control.get('value');
+      valueControl?.setValue(selectedOptionId);
+      valueControl?.markAsTouched();
+    }
+
     if (selectedOptionId) {
       const option = this.criteriaOptions[criteriaType].find(opt => opt.id === selectedOptionId);
       if (option) {
-        const control = this.getDistributionControlByIndex(criteriaType, itemIndex);
-        if (control) {
-          const valueControl = control.get('value');
-          valueControl?.setValue(selectedOptionId);
-          valueControl?.markAsTouched();
-        }
-
         this.criteriaGroups.update(groups => {
           const groupIndex = groups.findIndex(g => g.type === criteriaType);
           if (groupIndex >= 0 && groups[groupIndex].items[itemIndex]) {
@@ -513,6 +520,16 @@ export class NewScenario {
           return [...groups];
         });
       }
+    } else {
+      // Clear the criteria data when empty option is selected
+      this.criteriaGroups.update(groups => {
+        const groupIndex = groups.findIndex(g => g.type === criteriaType);
+        if (groupIndex >= 0 && groups[groupIndex].items[itemIndex]) {
+          groups[groupIndex].items[itemIndex].criteriaId = '';
+          groups[groupIndex].items[itemIndex].criteriaName = '';
+        }
+        return [...groups];
+      });
     }
   }
 
@@ -579,6 +596,11 @@ export class NewScenario {
   protected getDistributionPercentageControlByIndex(criteriaType: CriteriaType, itemIndex: number): FormControl | undefined {
     const control = this.getDistributionControlByIndex(criteriaType, itemIndex);
     return control?.get('percentage') as FormControl;
+  }
+
+  public markDistributionValueAsTouched(criteriaType: CriteriaType, itemIndex: number): void {
+    const control = this.getDistributionValueControlByIndex(criteriaType, itemIndex);
+    control?.markAsTouched();
   }
 
   private getFormArrayIndexForItem(criteriaType: CriteriaType, itemIndex: number): number {
