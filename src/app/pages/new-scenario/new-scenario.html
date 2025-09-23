@@ -265,6 +265,9 @@
                     @if (hasDuplicatesInCriteriaType(criteriaType)) {
                       <p class="mt-4 text-sm text-red-700">You cannot add the same criteria value twice. Please remove duplicate entries.</p>
                     }
+                    @if (criteriaGroup.hasError('duplicateDistributionValue')) {
+                      <p class="mt-4 text-sm text-red-700">Duplicate distribution values detected. Please ensure all criteria values are unique.</p>
+                    }
 
                     <div class="space-y-3">
                       @for (item of group.items; track item.criteriaId; let i = $index) {

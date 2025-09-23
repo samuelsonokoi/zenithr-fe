@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, signal, computed, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ChangeDetectorRef, signal, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { CdkStepperModule } from '@angular/cdk/stepper';
 import { ReactiveFormsModule, FormControl, FormGroup, FormArray, Validators } from '@angular/forms';
@@ -99,6 +99,24 @@ export class NewScenario {
   readonly enpsSettingsGroupStatus = toSignal(this.enpsSettingsGroup.statusChanges, { initialValue: this.enpsSettingsGroup.status });
   readonly commentsGroupStatus = toSignal(this.commentsGroup.statusChanges, { initialValue: this.commentsGroup.status });
 
+  // Track touched state for each form group
+  private readonly productGroupTouched = signal(false);
+  private readonly respondentGroupTouched = signal(false);
+  private readonly criteriaGroupTouched = signal(false);
+  private readonly impactDriversGroupTouched = signal(false);
+  private readonly enpsSettingsGroupTouched = signal(false);
+  private readonly commentsGroupTouched = signal(false);
+
+  // Create reactive form control status tracking
+  private readonly productGroupStatusChanges = toSignal(
+    this.productGroup.statusChanges,
+    { initialValue: this.productGroup.status }
+  );
+  private readonly criteriaGroupStatusChanges = toSignal(
+    this.criteriaGroup.statusChanges,
+    { initialValue: this.criteriaGroup.status }
+  );
+
   readonly productGroupValid = computed(() => this.productGroupStatus() === 'VALID');
 
   readonly respondentGroupValid = computed(() => this.respondentGroupStatus() === 'VALID');
@@ -143,9 +161,93 @@ export class NewScenario {
 
   readonly commentsGroupValid = computed(() => this.commentsGroupStatus() === 'VALID');
 
+  // Cache selected groups to avoid filtering on every access
+  private readonly selectedCriteriaGroups = computed(() =>
+    this.criteriaGroups().filter(group => group.selected)
+  );
 
+  readonly criteriaGroupStatus = computed(() => {
+    const selectedGroups = this.selectedCriteriaGroups();
+
+    // If no criteria are selected, consider it valid (optional step)
+    if (selectedGroups.length === 0) {
+      return 'VALID';
+    }
+
+    // Check if all selected criteria have valid distributions
+    const hasEmptyDistributions = selectedGroups.some(group => group.items.length === 0);
+    if (hasEmptyDistributions) {
+      return 'INVALID';
+    }
+
+    // Check if all items have valid percentages
+    const hasInvalidPercentages = selectedGroups.some(group =>
+      group.items.some(item => !item.percentage || item.percentage <= 0)
+    );
+    if (hasInvalidPercentages) {
+      return 'INVALID';
+    }
+
+    // Check FormArray validation (includes required fields and duplicateDistributionValueValidator)
+    // Use reactive status tracking to ensure immediate updates
+    const criteriaFormGroupStatus = this.criteriaGroupStatusChanges();
+    return criteriaFormGroupStatus;
+  });
+  readonly criteriaGroupValid = computed(() => this.criteriaGroupStatus() === 'VALID');
+
+  // Computed properties for error detection (touched AND invalid)
+  readonly productGroupHasError = computed(() =>
+    this.productGroupTouched() && !this.productGroupValid()
+  );
+
+  readonly respondentGroupHasError = computed(() =>
+    this.respondentGroupTouched() && !this.respondentGroupValid()
+  );
+
+  readonly criteriaGroupHasError = computed(() => {
+    // For criteria step, show errors immediately when validation fails
+    // (don't wait for touched state due to complex validation scenarios)
+    const hasValidationErrors = !this.criteriaGroupValid();
+    const hasActiveInteraction = this.selectedCriteriaGroups().length > 0;
+
+    // Show errors if:
+    // 1. User has interacted with criteria (touched) AND there are validation errors, OR
+    // 2. User has selected criteria AND there are validation errors (immediate feedback)
+    return (this.criteriaGroupTouched() && hasValidationErrors) ||
+           (hasActiveInteraction && hasValidationErrors);
+  });
+
+  readonly impactDriversGroupHasError = computed(() =>
+    this.impactDriversGroupTouched() && !this.impactDriversGroupValid()
+  );
+
+  readonly enpsSettingsGroupHasError = computed(() =>
+    this.enpsSettingsGroupTouched() && !this.enpsSettingsGroupValid()
+  );
+
+  readonly commentsGroupHasError = computed(() =>
+    this.commentsGroupTouched() && !this.commentsGroupValid()
+  );
+
+  // Optimize step configuration with memoized properties
   readonly stepperConfig = computed<StepperConfig>(() => {
     const completedSteps = this.completedSteps();
+
+    // Cache validation states to prevent repeated calculations
+    const productValid = this.productGroupValid();
+    const respondentValid = this.respondentGroupValid();
+    const criteriaValid = this.criteriaGroupValid();
+    const driversValid = this.impactDriversGroupValid();
+    const enpsValid = this.enpsSettingsGroupValid();
+    const commentsValid = this.commentsGroupValid();
+
+    const productError = this.productGroupHasError();
+    const respondentError = this.respondentGroupHasError();
+    const criteriaError = this.criteriaGroupHasError();
+    const driversError = this.impactDriversGroupHasError();
+    const enpsError = this.enpsSettingsGroupHasError();
+    const commentsError = this.commentsGroupHasError();
+
     return {
       title: 'New Scenario',
       role: 'HR Admin',
@@ -153,40 +255,40 @@ export class NewScenario {
         {
           id: 'product',
           title: 'Select Product',
-          completed: completedSteps.has('product') && this.productGroupValid(),
-          hasError: false
+          completed: completedSteps.has('product') && productValid,
+          hasError: productError
         },
         {
           id: 'respondents',
           title: 'Total Respondents',
-          completed: completedSteps.has('respondents') && this.respondentGroupValid(),
-          hasError: false
+          completed: completedSteps.has('respondents') && respondentValid,
+          hasError: respondentError
         },
         {
           id: 'criteria',
           title: 'Select Criteria',
           optional: true,
           completed: this.isCriteriaStepCompleted(completedSteps.has('criteria')),
-          hasError: false
+          hasError: criteriaError
         },
         {
           id: 'drivers',
           title: 'Set Impact Drivers',
-          completed: completedSteps.has('drivers') && this.impactDriversGroupValid(),
-          hasError: false
+          completed: completedSteps.has('drivers') && driversValid,
+          hasError: driversError
         },
         {
           id: 'enps',
           title: 'eNPS',
-          completed: completedSteps.has('enps') && this.enpsSettingsGroupValid(),
-          hasError: false
+          completed: completedSteps.has('enps') && enpsValid,
+          hasError: enpsError
         },
         {
           id: 'comments',
           title: 'Comments',
           optional: true,
           completed: this.isCommentsStepCompleted(completedSteps.has('comments')),
-          hasError: false
+          hasError: commentsError
         }
       ]
     };
@@ -250,16 +352,13 @@ export class NewScenario {
   });
 
   readonly criteriaValidation = computed(() => {
-    const groups = this.criteriaGroups();
-    const hasSelectedCriteria = groups.some(group => group.selected);
+    const selectedGroups = this.selectedCriteriaGroups();
 
-    if (!hasSelectedCriteria) {
+    if (selectedGroups.length === 0) {
       return false;
     }
 
-    return groups.every(group => {
-      if (!group.selected) return true;
-
+    return selectedGroups.every(group => {
       if (group.items.length === 0) return false;
 
       return group.items.every(item =>
@@ -267,6 +366,8 @@ export class NewScenario {
       );
     });
   });
+
+  private readonly cdr = inject(ChangeDetectorRef);
 
   constructor() {
     // Initialize first step as visited
@@ -282,6 +383,38 @@ export class NewScenario {
       steps.add(stepId);
       return new Set(steps);
     });
+  }
+
+  // Methods to mark form groups as touched
+  markStepAsTouched(stepId: string): void {
+    switch (stepId) {
+      case 'product':
+        this.productGroupTouched.set(true);
+        break;
+      case 'respondents':
+        this.respondentGroupTouched.set(true);
+        break;
+      case 'criteria':
+        this.criteriaGroupTouched.set(true);
+        break;
+      case 'drivers':
+        this.impactDriversGroupTouched.set(true);
+        break;
+      case 'enps':
+        this.enpsSettingsGroupTouched.set(true);
+        break;
+      case 'comments':
+        this.commentsGroupTouched.set(true);
+        break;
+    }
+  }
+
+  // Method to mark a form group as touched when user interacts with it
+  markFormGroupAsTouched(stepId: string): void {
+    this.markStepAsTouched(stepId);
+
+    // Trigger change detection for immediate error state updates
+    this.cdr.detectChanges();
   }
 
   // Method to check if user can complete current step (has validation or is optional)
@@ -302,6 +435,16 @@ export class NewScenario {
       steps.add(event.stepId);
       return new Set(steps);
     });
+
+    // Mark the previous step as touched when user moves away from it
+    const steps = this.stepperConfig().steps;
+    if (event.fromIndex >= 0 && event.fromIndex < steps.length) {
+      const fromStepId = steps[event.fromIndex].id;
+      this.markStepAsTouched(fromStepId);
+    }
+
+    // Trigger change detection for immediate error state updates
+    this.cdr.detectChanges();
   }
 
   // Check if criteria step is completed - only when user has actually engaged
@@ -413,7 +556,22 @@ export class NewScenario {
     } else {
       console.log('Form is invalid. Please check all required fields.');
       this.markFormGroupTouched(this.scenarioForm);
+      // Mark all steps as touched to show error states
+      this.markAllStepsAsTouched();
+
+      // Trigger change detection for immediate error state updates
+      this.cdr.detectChanges();
     }
+  }
+
+  // Mark all steps as touched to trigger error display
+  private markAllStepsAsTouched(): void {
+    this.productGroupTouched.set(true);
+    this.respondentGroupTouched.set(true);
+    this.criteriaGroupTouched.set(true);
+    this.impactDriversGroupTouched.set(true);
+    this.enpsSettingsGroupTouched.set(true);
+    this.commentsGroupTouched.set(true);
   }
 
   private markFormGroupTouched(formGroup: FormGroup): void {
@@ -460,6 +618,8 @@ export class NewScenario {
       return [...groups];
     });
 
+    // Trigger change detection for immediate UI updates
+    this.cdr.detectChanges();
   }
 
   private createDistributionFormGroup(criteriaId: string = '', percentage: number | null = null): FormGroup {
@@ -480,6 +640,9 @@ export class NewScenario {
       // Add new FormGroup to the FormArray
       const distributionGroup = this.createDistributionFormGroup(criteriaId);
       distributionsArray.push(distributionGroup);
+
+      // Force FormArray validation update
+      distributionsArray.updateValueAndValidity();
     }
 
     // Also update the signal for UI display
@@ -493,6 +656,9 @@ export class NewScenario {
         });
       }
     });
+
+    // Trigger change detection for immediate UI updates
+    this.cdr.detectChanges();
   }
 
   removeDistributionItem(criteriaType: CriteriaType, itemIndex: number): void {
@@ -505,6 +671,9 @@ export class NewScenario {
 
     if (formArrayIndex !== -1 && formArrayIndex < distributionsArray.length) {
       distributionsArray.removeAt(formArrayIndex);
+
+      // Force FormArray validation update after removal
+      distributionsArray.updateValueAndValidity();
     }
 
     // Also update the signal for UI display
@@ -512,6 +681,9 @@ export class NewScenario {
       group.items.splice(itemIndex, 1);
       this.updateCriteriaTotalPercentage(criteriaType);
     });
+
+    // Trigger change detection for immediate UI updates
+    this.cdr.detectChanges();
   }
 
   updateDistributionPercentage(criteriaType: CriteriaType, criteriaId: string, percentage: number): void {
@@ -525,6 +697,11 @@ export class NewScenario {
       const percentageControl = control.get('percentage');
       percentageControl?.setValue(percentage);
       percentageControl?.markAsTouched();
+
+      // Force FormArray validation update after removal
+      distributionsArray.updateValueAndValidity();
+      
+      this.cdr.detectChanges();
     }
 
     // Also update the signal for UI display
@@ -539,6 +716,9 @@ export class NewScenario {
       }
       return [...groups];
     });
+
+    // Trigger change detection for immediate UI updates
+    this.cdr.detectChanges();
   }
 
   public updateDistributionPercentageFromEvent(criteriaType: CriteriaType, criteriaId: string, event: Event): void {
@@ -567,6 +747,9 @@ export class NewScenario {
       }
       return [...groups];
     });
+
+    // Trigger change detection for immediate error state updates
+    this.cdr.detectChanges();
   }
 
   public updateDistributionItem(criteriaType: CriteriaType, itemIndex: number, event: Event): void {
@@ -579,6 +762,9 @@ export class NewScenario {
       const valueControl = control.get('value');
       valueControl?.setValue(selectedOptionId);
       valueControl?.markAsTouched();
+
+      // Force FormArray validation update after value change
+      this.distributionsArray.updateValueAndValidity();
     }
 
     if (selectedOptionId) {
@@ -604,6 +790,9 @@ export class NewScenario {
         return [...groups];
       });
     }
+
+    // Trigger change detection for immediate error state updates
+    this.cdr.detectChanges();
   }
 
   private updateCriteriaTotalPercentage(criteriaType: CriteriaType): void {

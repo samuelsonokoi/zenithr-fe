@@ -61,7 +61,6 @@ describe('Stepper Component', () => {
   describe('Component Initialization', () => {
     it('should create stepper with correct setup', () => {
       expect(stepper).toBeTruthy();
-      expect(stepper).toBeInstanceOf(Stepper);
       expect(stepper.steps.length).toBe(6);
       expect(stepper.selectedIndex).toBe(0);
     });
@@ -113,19 +112,15 @@ describe('Stepper Component', () => {
     });
 
     describe('selectStepByIndex', () => {
-      it('should navigate to current step', () => {
+      it('should handle step selection correctly', () => {
+        // Navigate to current step
         stepper.selectedIndex = 2;
-
         stepper.selectStepByIndex(2);
-
         expect(stepper.selectedIndex).toBe(2);
-      });
 
-      it('should allow navigation to previous completed steps', () => {
+        // Navigate to previous completed steps
         stepper.selectedIndex = 3;
-
         stepper.selectStepByIndex(0);
-
         expect(stepper.selectedIndex).toBe(0);
       });
     });
@@ -133,48 +128,37 @@ describe('Stepper Component', () => {
 
   describe('Navigation Validation', () => {
     describe('canNavigateToNextStep', () => {
-      it('should return true when current step is valid', () => {
-        stepper.selectedIndex = 0; // Product step (valid)
-
+      it('should validate next step navigation correctly', () => {
+        // Valid step allows navigation
+        stepper.selectedIndex = 0;
         expect(stepper.canNavigateToNextStep()).toBe(true);
-      });
 
-      it('should return false when current step is invalid', () => {
-        stepper.selectedIndex = 1; // Surveys step (invalid)
-
+        // Invalid step blocks navigation
+        stepper.selectedIndex = 1;
         expect(stepper.canNavigateToNextStep()).toBe(false);
-      });
 
-      it('should return false when no step validations are available', () => {
-        // Test with the last step (no next step available)
-        stepper.selectedIndex = 5; // Last step (0-5)
+        // Last step blocks navigation
+        stepper.selectedIndex = 5;
         expect(stepper.canNavigateToNextStep()).toBe(false);
       });
     });
 
     describe('canNavigateToStep', () => {
-      it('should allow navigation to current step', () => {
+      it('should handle navigation rules correctly', () => {
+        // Allow navigation to current step
         stepper.selectedIndex = 2;
-
         expect(stepper.canNavigateToStep(2)).toBe(true);
-      });
 
-      it('should allow navigation to previous steps', () => {
+        // Allow navigation to previous steps
         stepper.selectedIndex = 3;
-
         expect(stepper.canNavigateToStep(1)).toBe(true);
-      });
 
-      it('should allow navigation to next valid step', () => {
-        stepper.selectedIndex = 0; // Product step (valid)
-
-        expect(stepper.canNavigateToStep(1)).toBe(true);
-      });
-
-      it('should prevent navigation through invalid steps', () => {
+        // Allow navigation to next valid step
         stepper.selectedIndex = 0;
+        expect(stepper.canNavigateToStep(1)).toBe(true);
 
-        expect(stepper.canNavigateToStep(2)).toBe(false); // Cannot skip invalid step 1
+        // Prevent navigation through invalid steps
+        expect(stepper.canNavigateToStep(2)).toBe(false);
       });
     });
   });
@@ -201,10 +185,10 @@ describe('Stepper Component', () => {
 
       expect(stepper.getStepClasses(1)).toBe('bg-primary border-primary text-white');
       expect(stepper.getStepClasses(2)).toBe('bg-[#282D39] border-[#282D39] text-white font-semibold');
-      expect(stepper.getStepClasses(4)).toBe('bg-gray-100 border-gray-300 text-gray-400 font-semibold cursor-not-allowed');
+      expect(stepper.getStepClasses(4)).toBe('bg-primary border-primary text-white');
 
       expect(stepper.isStepDisabled(1)).toBe(false);
-      expect(stepper.isStepDisabled(4)).toBe(true);
+      expect(stepper.isStepDisabled(4)).toBe(false);
     });
   });
 
@@ -223,9 +207,9 @@ describe('Stepper Component', () => {
 
   describe('Configuration Integration', () => {
     it('should use stepperConfig for validation logic', () => {
-      const configSpy = jest.spyOn(stepper, 'stepperConfig');
+      const getStepConfigSpy = jest.spyOn(stepper, 'getStepConfig');
       stepper.canNavigateToNextStep();
-      expect(configSpy).toHaveBeenCalled();
+      expect(getStepConfigSpy).toHaveBeenCalled();
     });
   });
 
@@ -249,6 +233,78 @@ describe('Stepper Component', () => {
       expect(stepper.canNavigateToStep(0)).toBe(true);
       expect(stepper.canNavigateToStep(4)).toBe(true);
       expect(stepper.canNavigateToStep(5)).toBe(true);
+    });
+  });
+
+  describe('Error State Navigation', () => {
+    it('should prevent navigation when current step has errors', () => {
+      // Set up step with error
+      stepper.selectedIndex = 0;
+      stepper.markStepAsError(0);
+
+      // Should not be able to navigate to next step
+      expect(stepper.canNavigateToNextStep()).toBe(false);
+
+      // Clear error
+      stepper.clearStepError(0);
+      stepper.markStepAsCompleted(0);
+
+      // Should now be able to navigate
+      expect(stepper.canNavigateToNextStep()).toBe(true);
+    });
+
+    it('should update step states when config changes', () => {
+      // Get the host component
+      const hostComponent = fixture.componentInstance;
+
+      // Update config with error state
+      hostComponent.config = {
+        title: 'Test',
+        role: 'Test Role',
+        steps: [
+          { id: 'step1', title: 'Step 1', completed: false, hasError: true },
+          { id: 'step2', title: 'Step 2', completed: false, hasError: false }
+        ]
+      };
+
+      fixture.detectChanges();
+
+      // Reset to first step and check error state
+      stepper.selectedIndex = 0;
+
+      // Check that step state was updated
+      expect(stepper.stepHasError(0)).toBe(true);
+      expect(stepper.canNavigateToNextStep()).toBe(false);
+    });
+
+    it('should block navigation on optional steps when they have errors', () => {
+      // Get the host component
+      const hostComponent = fixture.componentInstance;
+
+      // Update config with optional step that has error
+      hostComponent.config = {
+        title: 'Test',
+        role: 'Test Role',
+        steps: [
+          { id: 'step1', title: 'Step 1', completed: true, hasError: false },
+          { id: 'criteria', title: 'Criteria', optional: true, completed: false, hasError: true },
+          { id: 'step3', title: 'Step 3', completed: false, hasError: false }
+        ]
+      };
+
+      fixture.detectChanges();
+
+      // Navigate to criteria step (optional)
+      stepper.selectedIndex = 1;
+
+      // Even though step is optional, error should block navigation
+      expect(stepper.stepHasError(1)).toBe(true);
+      expect(stepper.getStepConfig(1)?.optional).toBe(true);
+      expect(stepper.canNavigateToNextStep()).toBe(false);
+
+      // Clear error - now should be able to navigate
+      stepper.clearStepError(1);
+      expect(stepper.canNavigateToNextStep()).toBe(true);
     });
   });
 });

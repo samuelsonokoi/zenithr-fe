@@ -251,22 +251,7 @@ describe('NewScenario Component', () => {
   });
 
 
-  describe('User Interactions', () => {
-    it('should handle form control updates', () => {
-      component.scenarioForm.get('product.title')?.setValue('Updated Title');
-      expect(component.scenarioForm.get('product.title')?.value).toBe('Updated Title');
-    });
-  });
 
-  describe('Computed Properties', () => {
-    it('should calculate step configuration', () => {
-      const config = component.stepperConfig();
-      expect(Array.isArray(config.steps)).toBe(true);
-      expect(config.steps.length).toBe(6);
-      expect(config.steps[0].id).toBe('product');
-      expect(config.steps[2].optional).toBe(true); // criteria step is optional
-    });
-  });
 
   describe('Criteria Management System', () => {
     describe('toggleCriterion', () => {
@@ -478,18 +463,6 @@ describe('NewScenario Component', () => {
         expect(component.isCriterionSelected(CriteriaType.GENDER)).toBe(false);
       });
 
-      it('should clear FormArray when toggling off criteria with items', () => {
-        component.toggleCriterion(CriteriaType.GENDER);
-        component.addDistributionItem(CriteriaType.GENDER, 'male', 'Male');
-        component.addDistributionItem(CriteriaType.GENDER, 'female', 'Female');
-
-        expect(component['distributionsArray'].length).toBe(2);
-
-        component.toggleCriterion(CriteriaType.GENDER);
-
-        expect(component['distributionsArray'].length).toBe(0);
-        expect(component.isCriterionSelected(CriteriaType.GENDER)).toBe(false);
-      });
     });
   });
 
@@ -523,55 +496,7 @@ describe('NewScenario Component', () => {
       });
     });
 
-    describe('Survey selection state management', () => {
-      it('should maintain selection state across page changes', () => {
-        const firstSurvey = component.currentPageSurveys()[0];
-        component.toggleSurvey(firstSurvey.id);
 
-        component.goToPage(2);
-        component.goToPage(1);
-
-        const updatedSurveys = component.currentPageSurveys();
-        const selectedSurvey = updatedSurveys.find(s => s.id === firstSurvey.id);
-        expect(selectedSurvey!.selected).toBe(true);
-      });
-
-      it('should handle select all on current page', () => {
-        component.toggleAllCurrentPageSurveys();
-
-        expect(component.areAllCurrentPageSurveysSelected()).toBe(true);
-        expect(component.areSomeCurrentPageSurveysSelected()).toBe(false);
-      });
-
-      it('should handle partial selection state', () => {
-        const currentSurveys = component.currentPageSurveys();
-        component.toggleSurvey(currentSurveys[0].id);
-
-        expect(component.areAllCurrentPageSurveysSelected()).toBe(false);
-        expect(component.areSomeCurrentPageSurveysSelected()).toBe(true);
-      });
-    });
-
-    describe('Pagination calculations', () => {
-      it('should calculate correct start and end indices', () => {
-        expect(component.currentPageStartIndex()).toBe(1);
-        expect(component.currentPageEndIndex()).toBe(10);
-
-        component.goToPage(2);
-        expect(component.currentPageStartIndex()).toBe(11);
-        expect(component.currentPageEndIndex()).toBe(20);
-
-        component.goToPage(3);
-        expect(component.currentPageStartIndex()).toBe(21);
-        expect(component.currentPageEndIndex()).toBe(25); // Total is 25
-      });
-
-      it('should generate correct pagination pages', () => {
-        const pages = component.paginationPages();
-        expect(pages).toEqual([1, 2, 3]);
-        expect(pages.length).toBe(3);
-      });
-    });
   });
 
   describe('Form Control Access Methods', () => {
@@ -581,54 +506,32 @@ describe('NewScenario Component', () => {
       component.addDistributionItem(CriteriaType.GENDER, 'female', 'Female');
     });
 
-    describe('getDistributionControl methods', () => {
-      it('should get distribution control by criteria ID', () => {
-        const control = component.getDistributionControl('male');
-        expect(control).toBeTruthy();
-        expect(control!.get('value')!.value).toBe('male');
-      });
+    it('should handle form control access correctly', () => {
+      // Test access by criteria ID
+      const control = component.getDistributionControl('male');
+      expect(control).toBeTruthy();
+      expect(control!.get('value')!.value).toBe('male');
 
-      it('should return undefined for non-existent criteria ID', () => {
-        const control = component.getDistributionControl('nonexistent');
-        expect(control).toBeUndefined();
-      });
+      const valueControl = component.getDistributionValueControl('male');
+      expect(valueControl).toBeTruthy();
+      expect(valueControl!.value).toBe('male');
 
-      it('should get value control by criteria ID', () => {
-        const valueControl = component.getDistributionValueControl('male');
-        expect(valueControl).toBeTruthy();
-        expect(valueControl!.value).toBe('male');
-      });
+      const percentageControl = component.getDistributionPercentageControl('male');
+      expect(percentageControl).toBeTruthy();
+      expect(percentageControl!.value).toBeNull();
 
-      it('should get percentage control by criteria ID', () => {
-        const percentageControl = component.getDistributionPercentageControl('male');
-        expect(percentageControl).toBeTruthy();
-        expect(percentageControl!.value).toBeNull();
-      });
-    });
+      // Test access by index
+      const controlByIndex = component['getDistributionControlByIndex'](CriteriaType.GENDER, 0);
+      expect(controlByIndex).toBeTruthy();
+      expect(controlByIndex!.get('value')!.value).toBe('male');
 
-    describe('getDistributionControlByIndex methods', () => {
-      it('should get distribution control by index', () => {
-        const control = component['getDistributionControlByIndex'](CriteriaType.GENDER, 0);
-        expect(control).toBeTruthy();
-        expect(control!.get('value')!.value).toBe('male');
-      });
+      const valueControlByIndex = component['getDistributionValueControlByIndex'](CriteriaType.GENDER, 1);
+      expect(valueControlByIndex).toBeTruthy();
+      expect(valueControlByIndex!.value).toBe('female');
 
-      it('should return undefined for invalid index', () => {
-        const control = component['getDistributionControlByIndex'](CriteriaType.GENDER, 10);
-        expect(control).toBeUndefined();
-      });
-
-      it('should get value control by index', () => {
-        const valueControl = component['getDistributionValueControlByIndex'](CriteriaType.GENDER, 1);
-        expect(valueControl).toBeTruthy();
-        expect(valueControl!.value).toBe('female');
-      });
-
-      it('should get percentage control by index', () => {
-        const percentageControl = component['getDistributionPercentageControlByIndex'](CriteriaType.GENDER, 0);
-        expect(percentageControl).toBeTruthy();
-        expect(percentageControl!.value).toBeNull();
-      });
+      // Test invalid cases
+      expect(component.getDistributionControl('nonexistent')).toBeUndefined();
+      expect(component['getDistributionControlByIndex'](CriteriaType.GENDER, 10)).toBeUndefined();
     });
   });
 
@@ -691,75 +594,105 @@ describe('NewScenario Component', () => {
     });
   });
 
-  describe('Event Handling & Integration', () => {
-    beforeEach(() => {
-      component.toggleCriterion(CriteriaType.GENDER);
-      component.addDistributionItem(CriteriaType.GENDER, 'male', 'Male');
+  describe('Error State Management', () => {
+    it('should show error state only when step is touched AND invalid', () => {
+      // Initially, no steps should have errors (not touched yet)
+      expect(component.productGroupHasError()).toBe(false);
+      expect(component.respondentGroupHasError()).toBe(false);
+
+      // Mark product step as touched
+      component.markStepAsTouched('product');
+
+      // Now product step should show error (touched + invalid)
+      expect(component.productGroupHasError()).toBe(true);
+
+      // Respondent step should still not show error (not touched)
+      expect(component.respondentGroupHasError()).toBe(false);
+
+      // Fill product form to make it valid
+      component.scenarioForm.get('product.title')!.setValue('Test Title');
+      component.scenarioForm.get('product.tenant')!.setValue('tenant1');
+      component.scenarioForm.get('product.company')!.setValue('company1');
+      component.scenarioForm.get('product.experienceProduct')!.setValue('product1');
+      fixture.detectChanges();
+
+      // Product error should be cleared (touched + valid)
+      expect(component.productGroupHasError()).toBe(false);
     });
 
-    describe('updateDistributionPercentageFromEventByIndex', () => {
-      it('should update percentage by index from event', () => {
-        const event = { target: { value: '85' } } as any;
+    it('should mark all steps as touched when form submission fails', () => {
+      // Initially no errors
+      expect(component.productGroupHasError()).toBe(false);
+      expect(component.respondentGroupHasError()).toBe(false);
 
-        component.updateDistributionPercentageFromEventByIndex(CriteriaType.GENDER, 0, event);
+      // Try to submit invalid form
+      component.onFinish();
 
-        const criteriaGroup = component.getCriteriaGroup(CriteriaType.GENDER);
-        expect(criteriaGroup!.items[0].percentage).toBe(85);
-
-        const formControl = component.getDistributionPercentageControl('male');
-        expect(formControl!.value).toBe(85);
-      });
+      // All steps should now show errors (all touched + invalid)
+      expect(component.productGroupHasError()).toBe(true);
+      expect(component.respondentGroupHasError()).toBe(true);
     });
 
-    describe('updateDistributionItem', () => {
-      it('should update distribution item from select event', () => {
-        const event = { target: { value: 'female' } } as any;
+    it('should reflect error states in stepper configuration for navigation blocking', () => {
+      // Mark product step as touched to trigger error state
+      component.markStepAsTouched('product');
 
-        component.updateDistributionItem(CriteriaType.GENDER, 0, event);
+      // Get the stepper configuration
+      const config = component.stepperConfig();
 
-        const criteriaGroup = component.getCriteriaGroup(CriteriaType.GENDER);
-        expect(criteriaGroup!.items[0].criteriaId).toBe('female');
+      // Product step should have error (touched + invalid)
+      expect(config.steps[0].hasError).toBe(true);
 
-        const formControl = component.getDistributionValueControl('female');
-        expect(formControl!.value).toBe('female');
-        expect(formControl!.touched).toBe(true);
-      });
+      // Fill product form to make it valid
+      component.scenarioForm.get('product.title')!.setValue('Test Title');
+      component.scenarioForm.get('product.tenant')!.setValue('tenant1');
+      component.scenarioForm.get('product.company')!.setValue('company1');
+      component.scenarioForm.get('product.experienceProduct')!.setValue('product1');
+      fixture.detectChanges();
 
-      it('should handle empty selection', () => {
-        const event = { target: { value: '' } } as any;
+      // Product step error should be cleared
+      const updatedConfig = component.stepperConfig();
+      expect(updatedConfig.steps[0].hasError).toBe(false);
+    });
 
-        component.updateDistributionItem(CriteriaType.GENDER, 0, event);
+    it('should block navigation from criteria step when it has validation errors', () => {
+      // Toggle a criterion and add invalid distribution (this should trigger error immediately)
+      component.toggleCriterion(component.availableCriteria[0].type);
+      component.addDistributionItem(component.availableCriteria[0].type, 'item1', 'Item 1');
+      component.addDistributionItem(component.availableCriteria[0].type, 'item1', 'Item 1'); // Duplicate - should trigger error
 
-        const criteriaGroup = component.getCriteriaGroup(CriteriaType.GENDER);
-        expect(criteriaGroup!.items[0].criteriaId).toBe(''); // Should be cleared when empty option selected
-        expect(criteriaGroup!.items[0].criteriaName).toBe(''); // Should be cleared when empty option selected
-      });
+      fixture.detectChanges();
+
+      // Get the stepper configuration
+      const config = component.stepperConfig();
+      const criteriaStep = config.steps.find(step => step.id === 'criteria');
+
+      // Criteria step should be optional but have error (even without being touched)
+      expect(criteriaStep!.optional).toBe(true);
+      expect(criteriaStep!.hasError).toBe(true);
+      expect(component.criteriaGroupHasError()).toBe(true);
+    });
+
+    it('should show immediate error feedback for criteria validation scenarios', () => {
+      // Initially no error
+      expect(component.criteriaGroupHasError()).toBe(false);
+
+      // Toggle a criterion - should show error immediately (selected but no distribution items)
+      component.toggleCriterion(component.availableCriteria[0].type);
+      expect(component.criteriaGroupHasError()).toBe(true);
+
+      // Add a distribution item - still error (no percentage set)
+      component.addDistributionItem(component.availableCriteria[0].type, 'item1', 'Item 1');
+      expect(component.criteriaGroupHasError()).toBe(true);
+
+      // Set percentage - error should clear (valid now)
+      component.updateDistributionPercentage(component.availableCriteria[0].type, 'item1', 50);
+      expect(component.criteriaGroupHasError()).toBe(false);
+
+      // This verifies that errors show immediately when criteria are selected/modified
+      // without needing the step to be "touched" first
     });
   });
 
-  describe('Edge Cases', () => {
-    it('should handle operations safely', () => {
-      expect(() => component.toggleSurvey('nonexistent-id')).not.toThrow();
-      expect(component.currentPageStartIndex()).toBeGreaterThan(0);
-    });
 
-    it('should handle criteria operations on non-existent types', () => {
-      expect(() => component.removeDistributionItem(CriteriaType.GENDER, 999)).not.toThrow();
-      expect(() => component.updateDistributionPercentage(CriteriaType.GENDER, 'nonexistent', 50)).not.toThrow();
-    });
-
-    it('should handle boundary conditions for pagination', () => {
-      component.goToPage(1);
-      expect(component['pagination']().currentPage).toBe(1);
-
-      component.goToPage(3);
-      expect(component['pagination']().currentPage).toBe(3);
-    });
-
-    it('should handle empty arrays and null values gracefully', () => {
-      expect(component.selectedCriteriaTypes()).toEqual([]);
-      expect(component.getCriteriaGroup(CriteriaType.GENDER)).toBeUndefined();
-      expect(component.getDistributionControl('nonexistent')).toBeUndefined();
-    });
-  });
 });

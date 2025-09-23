@@ -93,14 +93,14 @@ export class Stepper extends CdkStepper {
     const stepConfig = this.getStepConfig(this.selectedIndex);
     if (!stepConfig) return false;
 
-    // If step is optional, it can always be navigated
+    // If step has error, it cannot be navigated (regardless of optional status)
+    if (stepConfig.hasError) return false;
+
+    // If step is optional, it can be navigated (as long as no errors)
     if (stepConfig.optional) return true;
 
     // If step is completed, it can be navigated
     if (stepConfig.completed) return true;
-
-    // If step has error, it cannot be navigated
-    if (stepConfig.hasError) return false;
 
     // By default, step needs to be completed to navigate
     return false;
