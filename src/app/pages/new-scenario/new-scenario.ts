@@ -40,27 +40,27 @@ export class NewScenario {
       selectedSurveys: new FormControl([] as string[])
     }),
     respondents: new FormGroup({
-      total: new FormControl('', [Validators.required, Validators.min(0)])
+      total: new FormControl('', [Validators.required])
     }),
     criteria: new FormGroup({
       distributions: new FormArray<FormGroup>([], [duplicateDistributionValueValidator()])
     }),
     impactDrivers: new FormGroup({
-      innovation: new FormControl('', [Validators.min(0), Validators.max(100)]),
-      motivation: new FormControl('', [Validators.min(0), Validators.max(100)]),
-      performance: new FormControl('', [Validators.min(0), Validators.max(100)]),
-      autonomy: new FormControl('', [Validators.min(0), Validators.max(100)]),
-      connection: new FormControl('', [Validators.min(0), Validators.max(100)]),
-      transformationalLeadership: new FormControl('', [Validators.min(0), Validators.max(100)]),
+      innovation: new FormControl('', [Validators.required, Validators.min(0), Validators.max(100)]),
+      motivation: new FormControl('', [Validators.required, Validators.min(0), Validators.max(100)]),
+      performance: new FormControl('', [Validators.required, Validators.min(0), Validators.max(100)]),
+      autonomy: new FormControl('', [Validators.required, Validators.min(0), Validators.max(100)]),
+      connection: new FormControl('', [Validators.required, Validators.min(0), Validators.max(100)]),
+      transformationalLeadership: new FormControl('', [Validators.required, Validators.min(0), Validators.max(100)]),
     }),
     enpsSettings: new FormGroup({
-      promoters: new FormControl('', [Validators.min(0), Validators.max(100)]),
-      passives: new FormControl('', [Validators.min(0), Validators.max(100)]),
-      detractors: new FormControl('', [Validators.min(0), Validators.max(100)]),
+      promoters: new FormControl('', [Validators.required, Validators.min(0), Validators.max(100)]),
+      passives: new FormControl('', [Validators.required, Validators.min(0), Validators.max(100)]),
+      detractors: new FormControl('', [Validators.required, Validators.min(0), Validators.max(100)]),
     }),
     comments: new FormGroup({
-      innovation: new FormControl(''),
-      motivation: new FormControl(''),
+      innovation: new FormControl('', [Validators.required]),
+      motivation: new FormControl('', [Validators.required]),
       performance: new FormControl(''),
       autonomy: new FormControl(''),
       connection: new FormControl(''),
@@ -156,19 +156,54 @@ export class NewScenario {
     ];
   });
 
-  readonly stepperConfig = computed<StepperConfig>(() => ({
-    title: 'New Scenario',
-    role: 'HR Admin',
-    steps: [
-      'Select Product',
-      'Total Respondents',
-      'Select Criteria',
-      'Set Impact Drivers',
-      'eNPS',
-      'Comments'
-    ],
-    stepValidations: this.stepValidations()
-  }));
+  readonly stepperConfig = computed<StepperConfig>(() => {
+    const completedSteps = this.completedSteps();
+    return {
+      title: 'New Scenario',
+      role: 'HR Admin',
+      steps: [
+        {
+          id: 'product',
+          title: 'Select Product',
+          completed: completedSteps.has('product') && this.productGroupValid(),
+          hasError: false
+        },
+        {
+          id: 'respondents',
+          title: 'Total Respondents',
+          completed: completedSteps.has('respondents') && this.respondentGroupValid(),
+          hasError: false
+        },
+        {
+          id: 'criteria',
+          title: 'Select Criteria',
+          optional: true,
+          completed: this.isCriteriaStepCompleted(completedSteps.has('criteria')),
+          hasError: false
+        },
+        {
+          id: 'drivers',
+          title: 'Set Impact Drivers',
+          completed: completedSteps.has('drivers') && this.impactDriversGroupValid(),
+          hasError: false
+        },
+        {
+          id: 'enps',
+          title: 'eNPS',
+          completed: completedSteps.has('enps') && this.enpsSettingsGroupValid(),
+          hasError: false
+        },
+        {
+          id: 'comments',
+          title: 'Comments',
+          optional: true,
+          completed: this.isCommentsStepCompleted(completedSteps.has('comments')),
+          hasError: false
+        }
+      ],
+      stepValidations: this.stepValidations() // Keep for backward compatibility
+    };
+  });
 
   readonly tenantOptions: TenantOption[] = tenantOptions;
 
@@ -190,6 +225,9 @@ export class NewScenario {
   });
 
   private readonly criteriaGroups = signal<CriteriaGroup[]>([]);
+
+  // Track which steps have been visited and completed by the user
+  private readonly completedSteps = signal<Set<string>>(new Set());
 
   readonly currentPageSurveys = computed(() => {
     const paginationData = this.pagination();
@@ -244,7 +282,65 @@ export class NewScenario {
   });
 
   constructor() {
+    // Initialize first step as visited
+    this.completedSteps.update(steps => {
+      steps.add('product');
+      return new Set(steps);
+    });
   }
+
+  // Method to mark a step as completed when user moves forward
+  markStepAsCompleted(stepId: string): void {
+    this.completedSteps.update(steps => {
+      steps.add(stepId);
+      return new Set(steps);
+    });
+  }
+
+  // Method to check if user can complete current step (has validation or is optional)
+  canCompleteCurrentStep(stepIndex: number): boolean {
+    const steps = this.stepperConfig().steps;
+    if (stepIndex >= steps.length) return false;
+
+    const step = steps[stepIndex];
+    if (step.optional) return true;
+
+    return this.stepValidations()[stepIndex];
+  }
+
+  // Handle step changes from stepper component
+  protected onStepChanged(event: { fromIndex: number; toIndex: number; stepId: string }): void {
+    // Mark the new step as visited
+    this.completedSteps.update(steps => {
+      steps.add(event.stepId);
+      return new Set(steps);
+    });
+  }
+
+  // Check if criteria step is completed - only when user has actually engaged
+  private isCriteriaStepCompleted(hasVisited: boolean): boolean {
+    if (!hasVisited) return false;
+
+    // For criteria step, consider it complete if:
+    // 1. User has visited AND no criteria are selected (user chose to skip)
+    // 2. User has visited AND criteria are properly configured
+    const selectedGroups = this.criteriaGroups().filter(group => group.selected);
+    if (selectedGroups.length === 0) {
+      return true; // User visited but chose not to add criteria
+    }
+
+    return this.criteriaValidation();
+  }
+
+  // Check if comments step is completed - only when user has actually engaged
+  private isCommentsStepCompleted(hasVisited: boolean): boolean {
+    if (!hasVisited) return false;
+
+    // Comments step is complete when user has visited it
+    // (no validation required as it's optional)
+    return true;
+  }
+
 
   protected setCurrentComment(section: CommentGroup) {
     this.currentCommentSection.set(section);
@@ -633,6 +729,18 @@ export class NewScenario {
         this.distributionsArray.removeAt(i);
       }
     }
+  }
+
+  hasDuplicatesInCriteriaType(criteriaType: CriteriaType): boolean {
+    const group = this.getCriteriaGroup(criteriaType);
+    if (!group || group.items.length <= 1) return false;
+
+    const values = group.items
+      .map(item => item.criteriaId)
+      .filter(id => id && id.trim() !== '');
+
+    const uniqueValues = new Set(values);
+    return values.length !== uniqueValues.size;
   }
 
   resetForm(): void {

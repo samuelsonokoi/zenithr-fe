@@ -1,5 +1,5 @@
 <form [formGroup]="scenarioForm" data-test-id="scenario-form">
-  <app-stepper [stepperConfig]="stepperConfig()" (cancelClicked)="onCancel()" (finishClicked)="onFinish()" data-test-id="scenario-stepper">
+  <app-stepper [stepperConfig]="stepperConfig()" (cancelClicked)="onCancel()" (finishClicked)="onFinish()" (stepChanged)="onStepChanged($event)" data-test-id="scenario-stepper">
     <cdk-step data-test-id="product-step">
       <div class="rounded-lg lg:max-w-5xl w-full mx-auto lg:py-8 py-16" formGroupName="product">
         <div class="mb-6">
@@ -262,7 +262,7 @@
                       <p class="mt-4 text-sm text-red-700">Please add distribution items for the selected criteria by clicking "+ Add" button.</p>
                     }
 
-                    @if (criteriaGroup.get('distributions')?.hasError('duplicateDistributionValue')) {
+                    @if (hasDuplicatesInCriteriaType(criteriaType)) {
                       <p class="mt-4 text-sm text-red-700">You cannot add the same criteria value twice. Please remove duplicate entries.</p>
                     }
 

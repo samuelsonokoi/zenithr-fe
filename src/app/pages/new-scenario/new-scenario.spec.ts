@@ -58,7 +58,7 @@ describe('NewScenario Component', () => {
     it('should render stepper with correct configuration', () => {
       const stepper = compiled.querySelector('app-stepper');
       expect(stepper).toBeTruthy();
-      expect(component.stepperConfig().stepValidations.length).toBe(6);
+      expect(component.stepperConfig().stepValidations?.length).toBe(6);
     });
   });
 
@@ -179,6 +179,19 @@ describe('NewScenario Component', () => {
       component.scenarioForm.get('product.company')?.setValue('company1');
       component.scenarioForm.get('product.experienceProduct')?.setValue('product1');
       component.scenarioForm.get('respondents.total')?.setValue('100');
+
+      // Add required impact drivers
+      component.scenarioForm.get('impactDrivers.innovation')?.setValue('80');
+      component.scenarioForm.get('impactDrivers.motivation')?.setValue('75');
+      component.scenarioForm.get('impactDrivers.performance')?.setValue('85');
+      component.scenarioForm.get('impactDrivers.autonomy')?.setValue('70');
+      component.scenarioForm.get('impactDrivers.connection')?.setValue('90');
+      component.scenarioForm.get('impactDrivers.transformationalLeadership')?.setValue('78');
+
+      // Add required eNPS settings
+      component.scenarioForm.get('enpsSettings.promoters')?.setValue('60');
+      component.scenarioForm.get('enpsSettings.passives')?.setValue('25');
+      component.scenarioForm.get('enpsSettings.detractors')?.setValue('15');
     });
 
     it('should submit valid form', () => {

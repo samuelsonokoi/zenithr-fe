@@ -7,7 +7,7 @@
 
     <div class="flex flex-col gap-2">
       <div class="text-center gap-2 text-base text-[#747884] font-semibold">
-        <span>Step {{ selectedIndex + 1 }} of {{ steps.length }}</span>
+        <span>Step {{ selectedIndex + 1 }} {{isStepOptional(selectedIndex + 1) ? '(Optional)' : null}} of {{ steps.length }}</span>
       </div>
 
       <nav aria-label="Form steps" class="flex items-center lg:gap-4 gap-2">
@@ -15,25 +15,34 @@
         <div class="flex justify-center items-center gap-2">
           <button
             role="tab"
-            class="w-8 h-8 rounded-full flex justify-center items-center border-2 text-xs font-semibold transition-all duration-200"
+            class="w-8 h-8 rounded-full flex justify-center items-center border-2 text-xs font-semibold transition-all duration-200 relative"
             [class]="getStepClasses(i)"
             [disabled]="isStepDisabled(i)"
-            [attr.aria-label]="'Step ' + (i + 1) + ': ' + (stepperConfig()?.steps?.[i] || 'Step ' + (i + 1))"
+            [attr.aria-label]="getStepAriaLabel(i)"
             [attr.aria-selected]="i === selectedIndex"
             [attr.aria-controls]="'step-panel-' + i"
             [attr.tabindex]="i === selectedIndex ? '0' : '-1'"
             (click)="selectStepByIndex(i)"
             (keydown.ArrowLeft)="goToPreviousStep()"
             (keydown.ArrowRight)="goToNextStep()">
-            @if(i < this.selectedIndex){
+            <!-- Error indicator -->
+            @if (stepHasError(i)) {
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+              </svg>
+            }
+            <!-- Completed indicator -->
+            @else if (isStepCompleted(i) || i < this.selectedIndex) {
               <img src="images/white-check.svg" alt="step complete" />
-            } @else {
+            }
+            <!-- Step number -->
+            @else {
               <span>{{ i + 1 }}</span>
             }
           </button>
           @if (i === selectedIndex) {
             <p class="text-[#282D39] text-sm font-medium lg:block hidden">
-              {{ stepperConfig()?.steps?.[i] || 'Step ' + (i + 1) }}
+              {{ getStepConfig(i)?.title || 'Step ' + (i + 1) }}
             </p>
           }
         </div>
