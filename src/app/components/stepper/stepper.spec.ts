@@ -24,8 +24,14 @@ class TestHostComponent {
   config: StepperConfig = {
     title: 'Create New Scenario',
     role: 'Product Manager',
-    steps: ['Product', 'Surveys', 'Criteria', 'Impact Drivers', 'eNPS Settings', 'Comments'],
-    stepValidations: [true, false, false, true, true, false]
+    steps: [
+      { id: 'product', title: 'Product', completed: true },
+      { id: 'surveys', title: 'Surveys', completed: false },
+      { id: 'criteria', title: 'Criteria', completed: false, optional: true },
+      { id: 'drivers', title: 'Impact Drivers', completed: true },
+      { id: 'enps', title: 'eNPS Settings', completed: true },
+      { id: 'comments', title: 'Comments', completed: false }
+    ]
   };
 
   onCancel() {}

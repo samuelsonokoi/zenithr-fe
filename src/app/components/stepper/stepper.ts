@@ -90,10 +90,19 @@ export class Stepper extends CdkStepper {
   }
 
   canNavigateToNextStep(): boolean {
-    const validations = this.stepperConfig()?.stepValidations;
-    if (validations && this.selectedIndex >= 0 && this.selectedIndex < validations.length) {
-      return validations[this.selectedIndex];
-    }
+    const stepConfig = this.getStepConfig(this.selectedIndex);
+    if (!stepConfig) return false;
+
+    // If step is optional, it can always be navigated
+    if (stepConfig.optional) return true;
+
+    // If step is completed, it can be navigated
+    if (stepConfig.completed) return true;
+
+    // If step has error, it cannot be navigated
+    if (stepConfig.hasError) return false;
+
+    // By default, step needs to be completed to navigate
     return false;
   }
 
@@ -102,23 +111,27 @@ export class Stepper extends CdkStepper {
       return true;
     }
 
-    // Allow backward navigation to editable steps
     if (targetIndex < this.selectedIndex) {
       return this.isStepEditable(targetIndex);
     }
 
-    // Forward navigation logic with step states
+    return this.canNavigateForward(targetIndex);
+  }
+
+  private canNavigateForward(targetIndex: number): boolean {
     const stepStates = this.stepStates();
+
     for (let i = this.selectedIndex; i < targetIndex; i++) {
       const stepConfig = stepStates.get(i);
 
       // If step is not optional and not completed, block navigation
       if (!stepConfig?.optional && !stepConfig?.completed) {
-        // Also check legacy stepValidations for backward compatibility
-        const validations = this.stepperConfig()?.stepValidations;
-        if (validations && i < validations.length && !validations[i]) {
-          return false;
-        }
+        return false;
+      }
+
+      // If step has error, block navigation
+      if (stepConfig?.hasError) {
+        return false;
       }
     }
 
@@ -146,9 +159,10 @@ export class Stepper extends CdkStepper {
   }
 
   getStepClasses(stepIndex: number): string {
+    const stepConfig = this.getStepConfig(stepIndex);
     const isDisabled = !this.canNavigateToStep(stepIndex);
-    const hasError = this.stepHasError(stepIndex);
-    const isCompleted = this.isStepCompleted(stepIndex);
+    const hasError = stepConfig?.hasError || false;
+    const isCompleted = stepConfig?.completed || false;
 
     if (hasError) {
       return 'bg-red-500 border-red-500 text-white';
@@ -202,13 +216,12 @@ export class Stepper extends CdkStepper {
     }
   }
 
-  // Generate comprehensive accessibility labels
   getStepAriaLabel(stepIndex: number): string {
     const config = this.getStepConfig(stepIndex);
     const title = config?.title || `Step ${stepIndex + 1}`;
     const optional = config?.optional ? ' (Optional)' : '';
-    const completed = this.isStepCompleted(stepIndex) ? ' - Completed' : '';
-    const hasError = this.stepHasError(stepIndex) ? ' - Has Error' : '';
+    const completed = config?.completed ? ' - Completed' : '';
+    const hasError = config?.hasError ? ' - Has Error' : '';
 
     return `${title}${optional}${completed}${hasError}`;
   }

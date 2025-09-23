@@ -1,4 +1,7 @@
-export interface StepConfig {
+/**
+ * Configuration for individual stepper steps
+ */
+export type StepConfig = {
   id: string;
   title: string;
   optional?: boolean;
@@ -9,9 +12,12 @@ export interface StepConfig {
   data?: any;
 }
 
+/**
+ * Configuration for the entire stepper component
+ * Includes step definitions and validation state
+ */
 export type StepperConfig = {
   title: string;
   role: string;
   steps: StepConfig[];
-  stepValidations?: boolean[]; // Keep for backward compatibility
 }

@@ -58,7 +58,7 @@ describe('NewScenario Component', () => {
     it('should render stepper with correct configuration', () => {
       const stepper = compiled.querySelector('app-stepper');
       expect(stepper).toBeTruthy();
-      expect(component.stepperConfig().stepValidations?.length).toBe(6);
+      expect(component.stepperConfig().steps.length).toBe(6);
     });
   });
 
@@ -192,6 +192,10 @@ describe('NewScenario Component', () => {
       component.scenarioForm.get('enpsSettings.promoters')?.setValue('60');
       component.scenarioForm.get('enpsSettings.passives')?.setValue('25');
       component.scenarioForm.get('enpsSettings.detractors')?.setValue('15');
+
+      // Add required comments
+      component.scenarioForm.get('comments.innovation')?.setValue('Test innovation comment');
+      component.scenarioForm.get('comments.motivation')?.setValue('Test motivation comment');
     });
 
     it('should submit valid form', () => {
@@ -246,16 +250,6 @@ describe('NewScenario Component', () => {
     });
   });
 
-  describe('Form State Management', () => {
-    it('should reset form and track validation states', () => {
-      component.scenarioForm.get('product.title')?.setValue('Test');
-      component.resetForm();
-      expect(component.scenarioForm.get('product.title')?.value).toBeNull();
-
-      expect(typeof component.productGroupValid()).toBe('boolean');
-      expect(typeof component.isProductGroupEmpty()).toBe('boolean');
-    });
-  });
 
   describe('User Interactions', () => {
     it('should handle form control updates', () => {
@@ -265,13 +259,12 @@ describe('NewScenario Component', () => {
   });
 
   describe('Computed Properties', () => {
-    it('should calculate step validations and configuration', () => {
-      const validations = component.stepValidations();
-      expect(Array.isArray(validations)).toBe(true);
-      expect(validations.length).toBe(6);
-
+    it('should calculate step configuration', () => {
       const config = component.stepperConfig();
-      expect(config.stepValidations).toBeTruthy();
+      expect(Array.isArray(config.steps)).toBe(true);
+      expect(config.steps.length).toBe(6);
+      expect(config.steps[0].id).toBe('product');
+      expect(config.steps[2].optional).toBe(true); // criteria step is optional
     });
   });
 
@@ -544,7 +537,6 @@ describe('NewScenario Component', () => {
       });
 
       it('should handle select all on current page', () => {
-        const currentSurveys = component.currentPageSurveys();
         component.toggleAllCurrentPageSurveys();
 
         expect(component.areAllCurrentPageSurveysSelected()).toBe(true);
@@ -642,20 +634,16 @@ describe('NewScenario Component', () => {
 
   describe('Form State Management', () => {
     describe('markFormGroupTouched', () => {
-      it('should recursively mark all form controls as touched', () => {
+      it('should recursively mark all form controls as touched including FormArrays', () => {
+        component.toggleCriterion(CriteriaType.GENDER);
+        component.addDistributionItem(CriteriaType.GENDER, 'male', 'Male');
+
         component['markFormGroupTouched'](component.scenarioForm);
 
         expect(component.scenarioForm.get('product.title')!.touched).toBe(true);
         expect(component.scenarioForm.get('product.tenant')!.touched).toBe(true);
         expect(component.scenarioForm.get('respondents.total')!.touched).toBe(true);
         expect(component.scenarioForm.get('impactDrivers.innovation')!.touched).toBe(true);
-      });
-
-      it('should handle FormArray controls', () => {
-        component.toggleCriterion(CriteriaType.GENDER);
-        component.addDistributionItem(CriteriaType.GENDER, 'male', 'Male');
-
-        component['markFormGroupTouched'](component.scenarioForm);
 
         const distributionControl = component.getDistributionControl('male');
         expect(distributionControl!.get('value')!.touched).toBe(true);
@@ -664,19 +652,9 @@ describe('NewScenario Component', () => {
     });
 
     describe('resetForm', () => {
-      it('should reset all form values and state', () => {
+      it('should reset all form values, state, and FormArrays', () => {
         component.scenarioForm.get('product.title')!.setValue('Test Title');
         component.toggleSurvey(component.currentPageSurveys()[0].id);
-        component.toggleCriterion(CriteriaType.GENDER);
-
-        component.resetForm();
-
-        expect(component.scenarioForm.get('product.title')!.value).toBeNull();
-        expect(component.currentPageSurveys().every(s => !s.selected)).toBe(true);
-        expect(component['criteriaGroups']()).toEqual([]);
-      });
-
-      it('should clear FormArray when resetting form', () => {
         component.toggleCriterion(CriteriaType.GENDER);
         component.addDistributionItem(CriteriaType.GENDER, 'male', 'Male');
         component.addDistributionItem(CriteriaType.GENDER, 'female', 'Female');
@@ -685,27 +663,28 @@ describe('NewScenario Component', () => {
 
         component.resetForm();
 
-        expect(component['distributionsArray'].length).toBe(0);
+        expect(component.scenarioForm.get('product.title')!.value).toBeNull();
+        expect(component.currentPageSurveys().every(s => !s.selected)).toBe(true);
         expect(component['criteriaGroups']()).toEqual([]);
+        expect(component['distributionsArray'].length).toBe(0);
+
+        expect(typeof component.productGroupValid()).toBe('boolean');
+        expect(typeof component.isProductGroupEmpty()).toBe('boolean');
       });
     });
 
     describe('isProductGroupEmpty', () => {
-      it('should return true when product group is empty', () => {
+      it('should detect empty and non-empty product states', () => {
         expect(component.isProductGroupEmpty()).toBe(true);
-      });
 
-      it('should return false when product has title', () => {
         component.scenarioForm.get('product.title')!.setValue('Test');
         expect(component.isProductGroupEmpty()).toBe(false);
-      });
 
-      it('should return false when surveys are selected', () => {
+        component.resetForm();
         component.toggleSurvey(component.currentPageSurveys()[0].id);
         expect(component.isProductGroupEmpty()).toBe(false);
-      });
 
-      it('should return false when any product field is filled', () => {
+        component.resetForm();
         component.scenarioForm.get('product.tenant')!.setValue('tenant1');
         expect(component.isProductGroupEmpty()).toBe(false);
       });

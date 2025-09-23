@@ -8,9 +8,7 @@ import { Stepper } from '../../components/stepper/stepper';
 import { StepperConfig } from '../../core/models/stepper.model';
 import {
   Survey,
-  TenantOption,
-  CompanyOption,
-  ExperienceProductOption,
+  Option,
   SurveyPagination,
   CriteriaType,
   CriteriaOption,
@@ -145,16 +143,6 @@ export class NewScenario {
 
   readonly commentsGroupValid = computed(() => this.commentsGroupStatus() === 'VALID');
 
-  readonly stepValidations = computed(() => {
-    return [
-      this.productGroupValid(),
-      this.respondentGroupValid(),
-      this.criteriaValidation(),
-      this.impactDriversGroupValid(),
-      this.enpsSettingsGroupValid(),
-      this.commentsGroupValid()
-    ];
-  });
 
   readonly stepperConfig = computed<StepperConfig>(() => {
     const completedSteps = this.completedSteps();
@@ -200,16 +188,15 @@ export class NewScenario {
           completed: this.isCommentsStepCompleted(completedSteps.has('comments')),
           hasError: false
         }
-      ],
-      stepValidations: this.stepValidations() // Keep for backward compatibility
+      ]
     };
   });
 
-  readonly tenantOptions: TenantOption[] = tenantOptions;
+  readonly tenantOptions: Option[] = tenantOptions;
 
-  readonly companyOptions: CompanyOption[] = companyOptions;
+  readonly companyOptions: Option[] = companyOptions;
 
-  readonly experienceProductOptions: ExperienceProductOption[] = experienceProductOptions;
+  readonly experienceProductOptions: Option[] = experienceProductOptions;
 
   readonly availableCriteria: { type: CriteriaType; name: string }[] = availableCriteria;
 
@@ -305,7 +292,7 @@ export class NewScenario {
     const step = steps[stepIndex];
     if (step.optional) return true;
 
-    return this.stepValidations()[stepIndex];
+    return step.completed || false;
   }
 
   // Handle step changes from stepper component
@@ -355,8 +342,7 @@ export class NewScenario {
       )
     );
 
-    const selectedSurveyIds = this.allSurveys().filter(survey => survey.selected).map(survey => survey.id);
-    this.productGroup.controls['selectedSurveys'].setValue(selectedSurveyIds);
+    this.updateSelectedSurveys();
   }
 
   areAllCurrentPageSurveysSelected(): boolean {
@@ -383,8 +369,7 @@ export class NewScenario {
       })
     );
 
-    const selectedSurveyIds = this.allSurveys().filter(survey => survey.selected).map(survey => survey.id);
-    this.productGroup.controls['selectedSurveys'].setValue(selectedSurveyIds);
+    this.updateSelectedSurveys();
   }
 
 
@@ -498,19 +483,15 @@ export class NewScenario {
     }
 
     // Also update the signal for UI display
-    this.criteriaGroups.update(groups => {
-      const groupIndex = groups.findIndex(g => g.type === criteriaType);
-      if (groupIndex >= 0) {
-        const existingItemIndex = groups[groupIndex].items.findIndex(item => item.criteriaId === criteriaId);
-        if (existingItemIndex === -1) {
-          groups[groupIndex].items.push({
-            criteriaId,
-            criteriaName,
-            percentage: null
-          });
-        }
+    this.updateCriteriaGroup(criteriaType, (group) => {
+      const existingItemIndex = group.items.findIndex(item => item.criteriaId === criteriaId);
+      if (existingItemIndex === -1) {
+        group.items.push({
+          criteriaId,
+          criteriaName,
+          percentage: null
+        });
       }
-      return [...groups];
     });
   }
 
@@ -527,13 +508,9 @@ export class NewScenario {
     }
 
     // Also update the signal for UI display
-    this.criteriaGroups.update(groups => {
-      const groupIndex = groups.findIndex(g => g.type === criteriaType);
-      if (groupIndex >= 0) {
-        groups[groupIndex].items.splice(itemIndex, 1);
-        this.updateCriteriaTotalPercentage(criteriaType);
-      }
-      return [...groups];
+    this.updateCriteriaGroup(criteriaType, (group) => {
+      group.items.splice(itemIndex, 1);
+      this.updateCriteriaTotalPercentage(criteriaType);
     });
   }
 
@@ -652,6 +629,28 @@ export class NewScenario {
 
   getCriteriaGroup(criteriaType: CriteriaType): CriteriaGroup | undefined {
     return this.criteriaGroups().find(group => group.type === criteriaType);
+  }
+
+  private findCriteriaGroupIndex(criteriaType: CriteriaType): number {
+    return this.criteriaGroups().findIndex(g => g.type === criteriaType);
+  }
+
+  private updateCriteriaGroup(criteriaType: CriteriaType, updater: (group: CriteriaGroup, index: number) => void): void {
+    this.criteriaGroups.update(groups => {
+      const groupIndex = this.findCriteriaGroupIndex(criteriaType);
+      if (groupIndex >= 0) {
+        updater(groups[groupIndex], groupIndex);
+      }
+      return [...groups];
+    });
+  }
+
+  private getSelectedSurveyIds(): string[] {
+    return this.allSurveys().filter(survey => survey.selected).map(survey => survey.id);
+  }
+
+  private updateSelectedSurveys(): void {
+    this.productGroup.controls['selectedSurveys'].setValue(this.getSelectedSurveyIds());
   }
 
   getDistributionControl(criteriaId: string): FormGroup | undefined {
