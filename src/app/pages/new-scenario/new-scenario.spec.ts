@@ -571,7 +571,7 @@ describe('NewScenario Component', () => {
         expect(component['criteriaGroups']()).toEqual([]);
         expect(component['distributionsArray'].length).toBe(0);
 
-        expect(typeof component.productGroupValid()).toBe('boolean');
+        expect(typeof (component.productGroup.status === 'VALID')).toBe('boolean');
         expect(typeof component.isProductGroupEmpty()).toBe('boolean');
       });
     });
@@ -614,6 +614,7 @@ describe('NewScenario Component', () => {
       component.scenarioForm.get('product.tenant')!.setValue('tenant1');
       component.scenarioForm.get('product.company')!.setValue('company1');
       component.scenarioForm.get('product.experienceProduct')!.setValue('product1');
+      component.productGroup.updateValueAndValidity();
       fixture.detectChanges();
 
       // Product error should be cleared (touched + valid)
@@ -648,6 +649,7 @@ describe('NewScenario Component', () => {
       component.scenarioForm.get('product.tenant')!.setValue('tenant1');
       component.scenarioForm.get('product.company')!.setValue('company1');
       component.scenarioForm.get('product.experienceProduct')!.setValue('product1');
+      component.productGroup.updateValueAndValidity();
       fixture.detectChanges();
 
       // Product step error should be cleared

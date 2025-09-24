@@ -1,5 +1,4 @@
 import { Component, ChangeDetectionStrategy, ChangeDetectorRef, signal, computed, inject } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { CdkStepperModule } from '@angular/cdk/stepper';
 import { ReactiveFormsModule, FormControl, FormGroup, FormArray, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -65,7 +64,7 @@ export class NewScenario {
     }),
   });
 
-  protected get productGroup() {
+  get productGroup() {
     return this.scenarioForm.controls.product as FormGroup;
   }
 
@@ -93,11 +92,6 @@ export class NewScenario {
     return this.criteriaGroup.get('distributions') as FormArray;
   }
 
-  readonly productGroupStatus = toSignal(this.productGroup.statusChanges, { initialValue: this.productGroup.status });
-  readonly respondentGroupStatus = toSignal(this.respondentGroup.statusChanges, { initialValue: this.respondentGroup.status });
-  readonly impactDriversGroupStatus = toSignal(this.impactDriversGroup.statusChanges, { initialValue: this.impactDriversGroup.status });
-  readonly enpsSettingsGroupStatus = toSignal(this.enpsSettingsGroup.statusChanges, { initialValue: this.enpsSettingsGroup.status });
-  readonly commentsGroupStatus = toSignal(this.commentsGroup.statusChanges, { initialValue: this.commentsGroup.status });
 
   // Track touched state for each form group
   private readonly productGroupTouched = signal(false);
@@ -107,66 +101,17 @@ export class NewScenario {
   private readonly enpsSettingsGroupTouched = signal(false);
   private readonly commentsGroupTouched = signal(false);
 
-  // Create reactive form control status tracking
-  private readonly productGroupStatusChanges = toSignal(
-    this.productGroup.statusChanges,
-    { initialValue: this.productGroup.status }
-  );
-  private readonly criteriaGroupStatusChanges = toSignal(
-    this.criteriaGroup.statusChanges,
-    { initialValue: this.criteriaGroup.status }
-  );
-
-  readonly productGroupValid = computed(() => this.productGroupStatus() === 'VALID');
-
-  readonly respondentGroupValid = computed(() => this.respondentGroupStatus() === 'VALID');
-
-  readonly impactDriversGroupValue = toSignal(this.impactDriversGroup.valueChanges, { initialValue: this.impactDriversGroup.value });
-
-  readonly enpsSettingsGroupValue = toSignal(this.enpsSettingsGroup.valueChanges, { initialValue: this.enpsSettingsGroup.value });
-
-  readonly impactDriversGroupValid = computed(() => this.impactDriversGroupStatus() === 'VALID');
-
-  readonly impactDriversTotal = computed(() => {
-    const values = this.impactDriversGroupValue(); // Track the value changes to make it reactive
-    const driversValues = [
-      Number(values.innovation) || 0,
-      Number(values.motivation) || 0,
-      Number(values.performance) || 0,
-      Number(values.autonomy) || 0,
-      Number(values.connection) || 0,
-      Number(values.transformationalLeadership) || 0
-    ];
-
-    const filledValues = driversValues.filter(value => value > 0);
-    const average = filledValues.length > 0 ? filledValues.reduce((sum, value) => sum + value, 0) / filledValues.length : 0;
-    return Math.round(average * 100) / 100;
-  });
 
 
-  readonly enpsSettingsGroupValid = computed(() => this.enpsSettingsGroupStatus() === 'VALID');
 
-  readonly enpsSettingsTotal = computed(() => {
-    const values = this.enpsSettingsGroupValue(); // Track the value changes to make it reactive
-    const enpsValues = [
-      Number(values.promoters) || 0,
-      Number(values.passives) || 0,
-      Number(values.detractors) || 0
-    ];
 
-    const filledValues = enpsValues.filter(value => value > 0);
-    const average = filledValues.length > 0 ? filledValues.reduce((sum, value) => sum + value, 0) / filledValues.length : 0;
-    return Math.round(average * 100) / 100;
-  });
-
-  readonly commentsGroupValid = computed(() => this.commentsGroupStatus() === 'VALID');
 
   // Cache selected groups to avoid filtering on every access
   private readonly selectedCriteriaGroups = computed(() =>
     this.criteriaGroups().filter(group => group.selected)
   );
 
-  readonly criteriaGroupStatus = computed(() => {
+  criteriaGroupStatus(): string {
     const selectedGroups = this.selectedCriteriaGroups();
 
     // If no criteria are selected, consider it valid (optional step)
@@ -188,26 +133,43 @@ export class NewScenario {
       return 'INVALID';
     }
 
-    // Check FormArray validation (includes required fields and duplicateDistributionValueValidator)
-    // Use reactive status tracking to ensure immediate updates
-    const criteriaFormGroupStatus = this.criteriaGroupStatusChanges();
-    return criteriaFormGroupStatus;
-  });
-  readonly criteriaGroupValid = computed(() => this.criteriaGroupStatus() === 'VALID');
+    // Check for duplicates in signal state (immediate feedback)
+    const hasDuplicatesInSignalState = selectedGroups.some(group =>
+      this.hasDuplicatesInCriteriaType(group.type)
+    );
+    if (hasDuplicatesInSignalState) {
+      return 'INVALID';
+    }
 
-  // Computed properties for error detection (touched AND invalid)
-  readonly productGroupHasError = computed(() =>
-    this.productGroupTouched() && !this.productGroupValid()
-  );
+    // For required field validation, check individual controls instead of FormArray status
+    // to avoid timing issues with the duplicateDistributionValueValidator
+    const hasRequiredFieldErrors = selectedGroups.some(group =>
+      group.items.some(item => !item.criteriaId || item.criteriaId.trim() === '')
+    );
+    if (hasRequiredFieldErrors) {
+      return 'INVALID';
+    }
 
-  readonly respondentGroupHasError = computed(() =>
-    this.respondentGroupTouched() && !this.respondentGroupValid()
-  );
+    return 'VALID';
+  }
 
-  readonly criteriaGroupHasError = computed(() => {
+  criteriaGroupValid(): boolean {
+    return this.criteriaGroupStatus() === 'VALID';
+  }
+
+  // Helper methods for error detection (touched AND invalid)
+  productGroupHasError(): boolean {
+    return this.productGroupTouched() && this.productGroup.status !== 'VALID';
+  }
+
+  respondentGroupHasError(): boolean {
+    return this.respondentGroupTouched() && this.respondentGroup.status !== 'VALID';
+  }
+
+  criteriaGroupHasError(): boolean {
     // For criteria step, show errors immediately when validation fails
     // (don't wait for touched state due to complex validation scenarios)
-    const hasValidationErrors = !this.criteriaGroupValid();
+    const hasValidationErrors = this.criteriaGroupStatus() !== 'VALID';
     const hasActiveInteraction = this.selectedCriteriaGroups().length > 0;
 
     // Show errors if:
@@ -215,31 +177,29 @@ export class NewScenario {
     // 2. User has selected criteria AND there are validation errors (immediate feedback)
     return (this.criteriaGroupTouched() && hasValidationErrors) ||
            (hasActiveInteraction && hasValidationErrors);
-  });
+  }
 
-  readonly impactDriversGroupHasError = computed(() =>
-    this.impactDriversGroupTouched() && !this.impactDriversGroupValid()
-  );
+  impactDriversGroupHasError(): boolean {
+    return this.impactDriversGroupTouched() && this.impactDriversGroup.status !== 'VALID';
+  }
 
-  readonly enpsSettingsGroupHasError = computed(() =>
-    this.enpsSettingsGroupTouched() && !this.enpsSettingsGroupValid()
-  );
+  enpsSettingsGroupHasError(): boolean {
+    return this.enpsSettingsGroupTouched() && this.enpsSettingsGroup.status !== 'VALID';
+  }
 
-  readonly commentsGroupHasError = computed(() =>
-    this.commentsGroupTouched() && !this.commentsGroupValid()
-  );
+  commentsGroupHasError(): boolean {
+    return this.commentsGroupTouched() && this.commentsGroup.status !== 'VALID';
+  }
 
-  // Optimize step configuration with memoized properties
-  readonly stepperConfig = computed<StepperConfig>(() => {
+  // Get step configuration (recalculated on each call for manual change detection)
+  stepperConfig(): StepperConfig {
     const completedSteps = this.completedSteps();
 
     // Cache validation states to prevent repeated calculations
-    const productValid = this.productGroupValid();
-    const respondentValid = this.respondentGroupValid();
-    const criteriaValid = this.criteriaGroupValid();
-    const driversValid = this.impactDriversGroupValid();
-    const enpsValid = this.enpsSettingsGroupValid();
-    const commentsValid = this.commentsGroupValid();
+    const productValid = this.productGroup.status === 'VALID';
+    const respondentValid = this.respondentGroup.status === 'VALID';
+    const driversValid = this.impactDriversGroup.status === 'VALID';
+    const enpsValid = this.enpsSettingsGroup.status === 'VALID';
 
     const productError = this.productGroupHasError();
     const respondentError = this.respondentGroupHasError();
@@ -292,7 +252,7 @@ export class NewScenario {
         }
       ]
     };
-  });
+  };
 
   readonly tenantOptions: Option[] = tenantOptions;
 
@@ -368,6 +328,36 @@ export class NewScenario {
   });
 
   private readonly cdr = inject(ChangeDetectorRef);
+
+  // Helper methods for calculations (replacing computed properties)
+  impactDriversTotal(): number {
+    const values = this.impactDriversGroup.value;
+    const driversValues = [
+      Number(values.innovation) || 0,
+      Number(values.motivation) || 0,
+      Number(values.performance) || 0,
+      Number(values.autonomy) || 0,
+      Number(values.connection) || 0,
+      Number(values.transformationalLeadership) || 0
+    ];
+
+    const filledValues = driversValues.filter(value => value > 0);
+    const average = filledValues.length > 0 ? filledValues.reduce((sum, value) => sum + value, 0) / filledValues.length : 0;
+    return Math.round(average * 100) / 100;
+  }
+
+  enpsSettingsTotal(): number {
+    const values = this.enpsSettingsGroup.value;
+    const enpsValues = [
+      Number(values.promoters) || 0,
+      Number(values.passives) || 0,
+      Number(values.detractors) || 0
+    ];
+
+    const filledValues = enpsValues.filter(value => value > 0);
+    const average = filledValues.length > 0 ? filledValues.reduce((sum, value) => sum + value, 0) / filledValues.length : 0;
+    return Math.round(average * 100) / 100;
+  }
 
   constructor() {
     // Initialize first step as visited
@@ -885,6 +875,7 @@ export class NewScenario {
   public markDistributionValueAsTouched(criteriaType: CriteriaType, itemIndex: number): void {
     const control = this.getDistributionValueControlByIndex(criteriaType, itemIndex);
     control?.markAsTouched();
+    this.cdr.detectChanges();
   }
 
   private getFormArrayIndexForItem(criteriaType: CriteriaType, itemIndex: number): number {
@@ -917,6 +908,12 @@ export class NewScenario {
         this.distributionsArray.removeAt(i);
       }
     }
+
+    // Force FormArray validation update after clearing criteria
+    this.distributionsArray.updateValueAndValidity();
+
+    // Trigger change detection for immediate UI updates
+    this.cdr.detectChanges();
   }
 
   hasDuplicatesInCriteriaType(criteriaType: CriteriaType): boolean {
