@@ -47,12 +47,12 @@ You can click [here to view the demo](https://zenithr-fe-demo.web.app) online
 
 | Command | Description |
 |---------|-------------|
-| `npm start` | Start development server |
-| `npm run build` | Build for production |
-| `npm run watch` | Build in watch mode |
+| `npm start` | Start development server (`ng serve`) |
+| `npm run build` | Build for production (`ng build`) |
+| `npm run watch` | Build in watch mode (`ng build --watch --configuration development`) |
 | `npm test` | Run Jest unit tests |
-| `npm run test:watchAll` | Run tests in watch mode |
-| `npm run test:coverage` | Generate test coverage report |
+| `npm run test:watchAll` | Run Jest tests in watch mode |
+| `npm run test:coverage` | Generate Jest test coverage report |
 
 ## 🏗️ Architecture & Design Decisions
 
@@ -157,13 +157,17 @@ src/
 
 ### 1. Custom Stepper Component
 
-**Features:**
+**Advanced Features:**
 
-- Extended Angular CDK Stepper with advanced state management for more flexibility
-- Step validation with error states
-- Optional step support
-- Programmatic navigation control
-- Accessibility compliance (ARIA labels, keyboard navigation)
+- **Extended Angular CDK:** Built on Angular CDK Stepper with enhanced state management capabilities
+- **Step Validation:** Comprehensive validation with error states that prevent navigation
+- **Optional Steps:** Support for skippable steps with conditional validation
+- **Error Handling:** Visual error indicators with ARIA error messages
+- **State Persistence:** Step completion tracking across navigation sessions
+- **Programmatic Control:** API for external step state management and navigation
+- **Accessibility First:** Full WCAG 2.1 compliance with ARIA labels, roles, and keyboard navigation
+- **Navigation Rules:** Smart navigation that prevents invalid step transitions
+- **Visual Feedback:** Dynamic CSS classes based on step state (completed, error, current, disabled)
 
 **Usage Pattern:**
 
@@ -178,6 +182,15 @@ stepperConfig(): StepperConfig {
     ]
   };
 }
+
+// Programmatic step control API
+stepper.markStepAsCompleted(0);           // Mark step as valid
+stepper.markStepAsError(1);               // Add error state
+stepper.clearStepError(1);                // Remove error state
+stepper.updateStepFromParent('product', { // Update by step ID
+  completed: true,
+  hasError: false
+});
 ```
 
 ### 2. Signal-Based Reactive Programming
@@ -202,16 +215,52 @@ protected readonly filteredData = computed(() => {
 - Clear data flow
 - Memory efficient
 
+**Real-World Example - Dashboard Search:**
+
+```typescript
+// Multi-field reactive search implementation
+protected readonly searchTerm = signal<string>('');
+protected readonly tableData = signal<ScenarioTableData[]>([...scenarios]);
+
+protected readonly filteredTableData = computed(() => {
+  const search = this.searchTerm().toLowerCase().trim();
+  if (!search) return this.tableData();
+
+  return this.tableData().filter(scenario => {
+    // Search across multiple fields
+    return scenario.name.toLowerCase().includes(search) ||
+           scenario.respondents.toString().includes(search) ||
+           `${scenario.rangeStart}-${scenario.rangeEnd}`.includes(search);
+  });
+});
+
+// Single event handler updates reactive chain
+protected updateSearchTerm(event: Event): void {
+  const input = event.target as HTMLInputElement;
+  this.searchTerm.set(input.value); // Triggers computed recalculation
+}
+```
+
+This pattern eliminates manual subscriptions and provides instant, efficient filtering across all table columns.
+
 ### 3. Dynamic Form Architecture
 
-**Nested Form Structure:**
+**Simplified Form Architecture:**
 
 ```typescript
 scenarioForm = new FormGroup({
-  product: new FormGroup({...}),
-  criteriaDistributions: new FormArray<FormGroup>([]),
+  product: new FormGroup({
+    title: new FormControl('', [Validators.required]),
+    tenant: new FormControl('', [Validators.required]),
+    company: new FormControl('', [Validators.required]),
+    experienceProduct: new FormControl('', [Validators.required]),
+    selectedSurveys: new FormControl([] as string[])
+  }),
+  respondentsTotal: new FormControl('', [Validators.required]),
+  criteriaDistributions: new FormArray<FormGroup>([], [duplicateDistributionValueValidator()]),
   impactDrivers: new FormGroup({...}),
-  // ... more nested groups
+  enpsSettings: new FormGroup({...}),
+  comments: new FormGroup({...})
 });
 ```
 
@@ -222,7 +271,46 @@ scenarioForm = new FormGroup({
 - Cross-field validation
 - State persistence across navigation
 
-### 4. Modular Validation System
+### 4. Access Modifier Design Pattern
+
+**Encapsulation Strategy:**
+
+The codebase follows a systematic approach to access modifiers for better encapsulation and maintainability:
+
+```typescript
+export class ExampleComponent {
+  // Public for external API access (rare)
+
+  // Protected for template access and testing
+  protected readonly dataSignal = signal<Data[]>([]);
+  protected computedValue = computed(() => this.dataSignal().length);
+  protected onUserAction(): void { /* template event handler */ }
+
+  // Private for internal implementation
+  private initializeComponent(): void { /* internal logic */ }
+  private validateData(data: Data): boolean { /* helper method */ }
+}
+```
+
+**Testing Access Pattern:**
+
+Protected methods in components are accessed in tests using bracket notation to maintain encapsulation while enabling testing:
+
+```typescript
+// Test access to protected methods
+component['onUserAction']();
+expect(component['computedValue']()).toBe(expectedValue);
+expect(component['dataSignal']()).toEqual(expectedData);
+```
+
+**Benefits:**
+
+- Clear separation between public API, template interface, and internal implementation
+- Maintains encapsulation while enabling comprehensive testing
+- Consistent patterns across all components
+- TypeScript compiler enforces access boundaries
+
+### 5. Modular Validation System
 
 **Custom Validators:**
 
@@ -301,22 +389,33 @@ export function duplicateDistributionValueValidator(): ValidatorFn {
 - Form submission requires all required steps to be valid
 - User should receive immediate feedback on validation errors
 
+**Component Architecture Assumptions:**
+
+- **Access Modifiers:** Components follow strict encapsulation with protected methods for template/test access and private methods for internal implementation
+- **Testing Strategy:** All protected methods are testable using bracket notation while maintaining proper encapsulation
+- **State Management:** Signals are preferred over observables for local component state
+- **Template Binding:** Direct access to protected properties and methods from templates
+- **Method Organization:** Public methods for component API, protected for templates/tests, private for internal logic
+
 ### Development Environment
 
 **Testing Strategy:**
 
-- Jest for unit testing (replacing deprecated Karma/Jasmine)
-- Component testing with Angular Testing Library patterns
-- Custom validators have dedicated test coverage
-- Accessibility testing integration
+- **Jest Framework:** Complete unit testing setup with Jest (replacing deprecated Karma/Jasmine)
+- **Component Testing:** Comprehensive test coverage with 68+ passing tests across all components
+- **Access Pattern Testing:** Protected methods accessed via bracket notation (`component['method']()`)
+- **Custom Validator Coverage:** Dedicated test suites for business rule validators
+- **Integration Testing:** Angular Testing Library patterns for user interaction testing
+- **Accessibility Testing:** ARIA labels and keyboard navigation testing integration
 
-**Code Quality:**
+**Code Quality & Patterns:**
 
-- TypeScript and Angular best practice
-- TypeScript strict mode enabled
-- Prettier for consistent formatting
-- ESLint for code quality
-- Single-quote preference for strings
+- **TypeScript Excellence:** Strict mode enabled with Angular best practices
+- **Access Modifier Strategy:** Systematic use of protected/private for proper encapsulation
+- **Testing Patterns:** Bracket notation for protected method access in tests
+- **Code Formatting:** Prettier with 100-character line width and single quotes
+- **Linting:** ESLint for consistent code quality and Angular-specific rules
+- **Component Architecture:** OnPush change detection with signal-based reactivity
 
 ## 🔮 Future Enhancements
 
