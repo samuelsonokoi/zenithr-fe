@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal, computed } from '@angular/core';
 import { Header } from '../../components/header/header';
 import { Sidebar } from '../../components/sidebar/sidebar';
 import { SidebarLink } from '../../core/models/sidebar.model';
@@ -33,6 +33,9 @@ export class Dashboard {
       },
     ]
   );
+
+  protected readonly searchTerm = signal<string>('');
+
   protected readonly tableData = signal<ScenarioTableData[]>([
     {
       name: 'Scenario A',
@@ -53,4 +56,38 @@ export class Dashboard {
       rangeEnd: 80
     },
   ]);
+
+  protected readonly filteredTableData = computed(() => {
+    const search = this.searchTerm().toLowerCase().trim();
+    if (!search) {
+      return this.tableData();
+    }
+
+    return this.tableData().filter(scenario => {
+      // Search in scenario name
+      if (scenario.name.toLowerCase().includes(search)) {
+        return true;
+      }
+
+      // Search in respondents count
+      if (scenario.respondents.toString().includes(search)) {
+        return true;
+      }
+
+      // Search in score range (both individual values and range format)
+      const rangeString = `${scenario.rangeStart}-${scenario.rangeEnd}`;
+      if (rangeString.includes(search) ||
+          scenario.rangeStart.toString().includes(search) ||
+          scenario.rangeEnd.toString().includes(search)) {
+        return true;
+      }
+
+      return false;
+    });
+  });
+
+  protected updateSearchTerm(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.searchTerm.set(input.value);
+  }
 }
