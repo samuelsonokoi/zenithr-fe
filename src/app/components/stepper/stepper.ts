@@ -38,7 +38,7 @@ export class Stepper extends CdkStepper {
     this.stepStates.set(stateMap);
   }
 
-  selectStepByIndex(index: number): void {
+  protected selectStepByIndex(index: number): void {
     if (this.canNavigateToStep(index)) {
       const previousIndex = this.selectedIndex;
       this.selectedIndex = index;
@@ -46,7 +46,7 @@ export class Stepper extends CdkStepper {
     }
   }
 
-  goToNextStep(): void {
+  protected goToNextStep(): void {
     if (this.selectedIndex < this.steps.length - 1 && this.canNavigateToNextStep()) {
       const previousIndex = this.selectedIndex;
       this.selectedIndex++;
@@ -55,7 +55,7 @@ export class Stepper extends CdkStepper {
   }
 
   // Update step state
-  updateStepState(stepIndex: number, updates: Partial<StepConfig>) {
+  protected updateStepState(stepIndex: number, updates: Partial<StepConfig>) {
     this.stepStates.update(states => {
       const current = states.get(stepIndex) || {} as StepConfig;
       states.set(stepIndex, { ...current, ...updates });
@@ -64,32 +64,32 @@ export class Stepper extends CdkStepper {
   }
 
   // Get step configuration
-  getStepConfig(stepIndex: number): StepConfig | undefined {
+  protected getStepConfig(stepIndex: number): StepConfig | undefined {
     return this.stepStates().get(stepIndex);
   }
 
   // Check if step is optional
-  isStepOptional(stepIndex: number): boolean {
+  protected isStepOptional(stepIndex: number): boolean {
     return this.getStepConfig(stepIndex)?.optional || false;
   }
 
   // Check if step has error
-  stepHasError(stepIndex: number): boolean {
+  protected stepHasError(stepIndex: number): boolean {
     return this.getStepConfig(stepIndex)?.hasError || false;
   }
 
   // Check if step is completed
-  isStepCompleted(stepIndex: number): boolean {
+  protected isStepCompleted(stepIndex: number): boolean {
     return this.getStepConfig(stepIndex)?.completed || false;
   }
 
   // Check if step is editable
-  isStepEditable(stepIndex: number): boolean {
+  private isStepEditable(stepIndex: number): boolean {
     const config = this.getStepConfig(stepIndex);
     return config?.editable !== false; // Default to true
   }
 
-  canNavigateToNextStep(): boolean {
+  protected canNavigateToNextStep(): boolean {
     const stepConfig = this.getStepConfig(this.selectedIndex);
     if (!stepConfig) return false;
 
@@ -106,7 +106,7 @@ export class Stepper extends CdkStepper {
     return false;
   }
 
-  canNavigateToStep(targetIndex: number): boolean {
+  protected canNavigateToStep(targetIndex: number): boolean {
     if (targetIndex === this.selectedIndex) {
       return true;
     }
@@ -138,7 +138,7 @@ export class Stepper extends CdkStepper {
     return true;
   }
 
-  goToPreviousStep(): void {
+  protected goToPreviousStep(): void {
     if (this.selectedIndex > 0) {
       const previousIndex = this.selectedIndex;
       this.selectedIndex--;
@@ -146,19 +146,19 @@ export class Stepper extends CdkStepper {
     }
   }
 
-  get canGoNext(): boolean {
+  protected get canGoNext(): boolean {
     return this.selectedIndex < this.steps.length - 1;
   }
 
-  get canGoPrevious(): boolean {
+  protected get canGoPrevious(): boolean {
     return this.selectedIndex > 0;
   }
 
-  get isLastStep(): boolean {
+  protected get isLastStep(): boolean {
     return this.selectedIndex === this.steps.length - 1;
   }
 
-  getStepClasses(stepIndex: number): string {
+  protected getStepClasses(stepIndex: number): string {
     const stepConfig = this.getStepConfig(stepIndex);
     const isDisabled = !this.canNavigateToStep(stepIndex);
     const hasError = stepConfig?.hasError || false;
@@ -177,46 +177,46 @@ export class Stepper extends CdkStepper {
     }
   }
 
-  isStepDisabled(stepIndex: number): boolean {
+  protected isStepDisabled(stepIndex: number): boolean {
     return !this.canNavigateToStep(stepIndex);
   }
 
-  get isFirstStep(): boolean {
+  protected get isFirstStep(): boolean {
     return this.selectedIndex === 0;
   }
 
-  onCancel(): void {
+  protected onCancel(): void {
     this.cancelClicked.emit();
   }
 
-  onFinish(): void {
+  protected onFinish(): void {
     this.finishClicked.emit();
   }
 
   // Mark step as completed
-  markStepAsCompleted(stepIndex: number) {
+  protected markStepAsCompleted(stepIndex: number) {
     this.updateStepState(stepIndex, { completed: true, hasError: false });
   }
 
   // Mark step as having error
-  markStepAsError(stepIndex: number) {
+  protected markStepAsError(stepIndex: number) {
     this.updateStepState(stepIndex, { hasError: true, completed: false });
   }
 
   // Clear step error
-  clearStepError(stepIndex: number) {
+  protected clearStepError(stepIndex: number) {
     this.updateStepState(stepIndex, { hasError: false });
   }
 
   // Method to programmatically update step states from parent
-  updateStepFromParent(stepId: string, updates: Partial<StepConfig>) {
+  protected updateStepFromParent(stepId: string, updates: Partial<StepConfig>) {
     const stepIndex = this.stepperConfig()?.steps.findIndex(s => s.id === stepId);
     if (stepIndex !== undefined && stepIndex >= 0) {
       this.updateStepState(stepIndex, updates);
     }
   }
 
-  getStepAriaLabel(stepIndex: number): string {
+  protected getStepAriaLabel(stepIndex: number): string {
     const config = this.getStepConfig(stepIndex);
     const title = config?.title || `Step ${stepIndex + 1}`;
     const optional = config?.optional ? ' (Optional)' : '';

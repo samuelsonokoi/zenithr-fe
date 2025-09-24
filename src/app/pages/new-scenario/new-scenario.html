@@ -238,117 +238,113 @@
             <div class="space-y-6">
 
               @for (criteriaType of selectedCriteriaTypes(); track criteriaType) {
-                @let group = getCriteriaGroup(criteriaType);
-                @if (group) {
-                  <div class="bg-white border border-gray-200 rounded-lg p-4">
-                    <div class="flex items-center justify-between mb-4">
-                      <div class="flex items-center space-x-2">
-                        <span class="w-6 h-6 border-2 border-primary text-primary rounded-md flex items-center justify-center text-xs font-medium">
-                          {{ selectedCriteriaTypes().indexOf(criteriaType) + 1 }}
-                        </span>
-                        <h5 class="text-sm font-medium text-[#282D39]">{{ group.name }}</h5>
-                      </div>
-                      <button
-                        type="button"
-                        (click)="addDistributionItem(criteriaType, '', '')"
-                        class="text-primary text-sm"
-                        [attr.aria-label]="'Add new ' + group.name.toLowerCase() + ' criteria'"
-                      >
-                        + Add
-                      </button>
+                @let criteriaName = getCriteriaName(criteriaType);
+                @let items = getDistributionItemsByType(criteriaType);
+                <div class="bg-white border border-gray-200 rounded-lg p-4">
+                  <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center space-x-2">
+                      <span class="w-6 h-6 border-2 border-primary text-primary rounded-md flex items-center justify-center text-xs font-medium">
+                        {{ selectedCriteriaTypes().indexOf(criteriaType) + 1 }}
+                      </span>
+                      <h5 class="text-sm font-medium text-[#282D39]">{{ criteriaName }}</h5>
                     </div>
+                    <button
+                      type="button"
+                      (click)="addDistributionItem(criteriaType)"
+                      class="text-primary text-sm"
+                      [attr.aria-label]="'Add new ' + criteriaName.toLowerCase() + ' criteria'"
+                    >
+                      + Add
+                    </button>
+                  </div>
 
-                    @if (group.items.length === 0) {
-                      <p class="mt-4 text-sm text-red-700">Please add distribution items for the selected criteria by clicking "+ Add" button.</p>
-                    }
+                  @if (items.length === 0) {
+                    <p class="mt-4 text-sm text-red-700">Please add distribution items for the selected criteria by clicking "+ Add" button.</p>
+                  }
 
-                    @if (hasDuplicatesInCriteriaType(criteriaType)) {
-                      <p class="mt-4 text-sm text-red-700">You cannot add the same criteria value twice. Please remove duplicate entries.</p>
-                    }
+                  @if (hasDuplicatesInType(criteriaType)) {
+                    <p class="mt-4 text-sm text-red-700">You cannot add the same criteria value twice. Please remove duplicate entries.</p>
+                  }
 
-                    <div class="space-y-3">
-                      @for (item of group.items; track item.criteriaId; let i = $index) {
-                        <div>
-                          <div class="flex items-center gap-4">
-                            <button type="button" aria-label="Drag to reorder criteria item" tabindex="-1">
-                              <img src="images/drag-handle.svg" alt="drag icon for criteria" />
-                            </button>
+                  <div class="space-y-3">
+                    @for (itemControl of items; track $index; let i = $index) {
+                      <div>
+                        <div class="flex items-center gap-4">
+                          <button type="button" aria-label="Drag to reorder criteria item" tabindex="-1">
+                            <img src="images/drag-handle.svg" alt="drag icon for criteria" />
+                          </button>
 
-                            <div class="flex-1">
-                              <select
-                                [value]="item.criteriaId"
-                                (change)="updateDistributionItem(criteriaType, i, $event)"
-                                (blur)="markDistributionValueAsTouched(criteriaType, i)"
-                                [class]="getDistributionValueControlByIndex(criteriaType, i)?.invalid && getDistributionValueControlByIndex(criteriaType, i)?.touched
-                                  ? 'w-full px-3 py-2 border border-[#FF4530] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0]'
-                                  : 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0]'"
-                              >
-                                <option value="">Choose {{ group.name.toLowerCase() }}...</option>
-                                @for (option of criteriaOptions[criteriaType]; track option.id) {
-                                  <option [value]="option.id">{{ option.name }}</option>
-                                }
-                              </select>
-                              @if (getDistributionValueControlByIndex(criteriaType, i)?.invalid && getDistributionValueControlByIndex(criteriaType, i)?.touched) {
-                                <div class="mt-1 text-xs text-red-600">Please select a {{ group.name.toLowerCase() }}</div>
+                          <div class="flex-1">
+                            <select
+                              [formControl]="$any(itemControl.get('criteriaId'))"
+                              [class]="itemControl.get('criteriaId')?.invalid && itemControl.get('criteriaId')?.touched
+                                ? 'w-full px-3 py-2 border border-[#FF4530] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0]'
+                                : 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0]'"
+                            >
+                              <option value="">Choose {{ criteriaName.toLowerCase() }}...</option>
+                              @for (option of criteriaOptions[criteriaType]; track option.id) {
+                                <option [value]="option.id">{{ option.name }}</option>
+                              }
+                            </select>
+                            @if (itemControl.get('criteriaId')?.invalid && itemControl.get('criteriaId')?.touched) {
+                              <div class="mt-1 text-xs text-red-600">Please select a {{ criteriaName.toLowerCase() }}</div>
+                            }
+                          </div>
+
+                          <div class="flex items-center space-x-1">
+                            <div>
+                              <input
+                                type="number"
+                                [formControl]="$any(itemControl.get('percentage'))"
+                                min="0"
+                                max="100"
+                                [class]="itemControl.get('percentage')?.invalid && itemControl.get('percentage')?.touched
+                                  ? 'w-16 px-2 py-2 border border-[#FF4530] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'
+                                  : 'w-16 px-2 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'"
+                              />
+                              @if (itemControl.get('percentage')?.invalid && itemControl.get('percentage')?.touched) {
+                                <div class="mt-1 text-xs text-red-600">
+                                  @if (itemControl.get('percentage')?.hasError('required')) {
+                                    Required
+                                  }
+                                  @if (itemControl.get('percentage')?.hasError('min')) {
+                                    Min is 0
+                                  }
+                                  @if (itemControl.get('percentage')?.hasError('max')) {
+                                    Max is 100
+                                  }
+                                </div>
                               }
                             </div>
-
-                            <div class="flex items-center space-x-1">
-                              <div>
-                                <input
-                                  type="number"
-                                  [value]="item.percentage || ''"
-                                  (input)="updateDistributionPercentageFromEventByIndex(criteriaType, i, $event)"
-                                  min="1"
-                                  max="100"
-                                  [class]="getDistributionPercentageControlByIndex(criteriaType, i)?.invalid && getDistributionPercentageControlByIndex(criteriaType, i)?.touched
-                                    ? 'w-16 px-2 py-2 border border-[#FF4530] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'
-                                    : 'w-16 px-2 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'"
-                                />
-                                @if (getDistributionPercentageControlByIndex(criteriaType, i)?.invalid && getDistributionPercentageControlByIndex(criteriaType, i)?.touched) {
-                                  <div class="mt-1 text-xs text-red-600">
-                                    @if (getDistributionPercentageControlByIndex(criteriaType, i)?.hasError('required')) {
-                                      Required
-                                    }
-                                    @if (getDistributionPercentageControlByIndex(criteriaType, i)?.hasError('min')) {
-                                      Min is 0
-                                    }
-                                    @if (getDistributionPercentageControlByIndex(criteriaType, i)?.hasError('max')) {
-                                      Max is 100
-                                    }
-                                  </div>
-                                }
-                              </div>
-                              <span class="text-sm text-[#747884]">%</span>
-                            </div>
-
-                            <button
-                              type="button"
-                              (click)="removeDistributionItem(criteriaType, i)"
-                              class="w-6 h-6 flex justify-center items-center bg-[#FF45301A] rounded-sm"
-                              [attr.aria-label]="'Remove ' + group.name.toLowerCase() + ' criteria'"
-                            >
-                              <img src="images/red-trash-icon.svg" alt="red trash icon for criteria control delete" />
-                            </button>
+                            <span class="text-sm text-[#747884]">%</span>
                           </div>
-                        </div>
-                      }
-                    </div>
 
-                    @if (group.items.length > 0) {
-                      <div class="mt-4 pt-3 border-t border-gray-200">
-                        <div class="flex items-center justify-between">
-                          <span class="text-[9.9px] font-medium text-[#747884] uppercase">TOTAL DISTRIBUTION</span>
-                          <span
-                            class="text-sm font-medium px-2 py-1 rounded bg-[#0082C61A] text-primary"
+                          <button
+                            type="button"
+                            (click)="removeDistributionItem(criteriaType, i)"
+                            class="w-6 h-6 flex justify-center items-center bg-[#FF45301A] rounded-sm"
+                            [attr.aria-label]="'Remove ' + criteriaName.toLowerCase() + ' criteria'"
                           >
-                            {{ group.totalPercentage }}%
-                          </span>
+                            <img src="images/red-trash-icon.svg" alt="red trash icon for criteria control delete" />
+                          </button>
                         </div>
                       </div>
                     }
                   </div>
-                }
+
+                  @if (items.length > 0) {
+                    <div class="mt-4 pt-3 border-t border-gray-200">
+                      <div class="flex items-center justify-between">
+                        <span class="text-[9.9px] font-medium text-[#747884] uppercase">TOTAL DISTRIBUTION</span>
+                        <span
+                          class="text-sm font-medium px-2 py-1 rounded bg-[#0082C61A] text-primary"
+                        >
+                          {{ getTotalPercentageForType(criteriaType) }}%
+                        </span>
+                      </div>
+                    </div>
+                  }
+                </div>
               }
 
               @if (selectedCriteriaTypes().length === 0) {

@@ -71,7 +71,7 @@ describe('Stepper Component', () => {
       it('should move to next step when current step is valid', () => {
         stepper.selectedIndex = 0; // Product step (valid)
 
-        stepper.goToNextStep();
+        stepper['goToNextStep']();
 
         expect(stepper.selectedIndex).toBe(1);
       });
@@ -79,7 +79,7 @@ describe('Stepper Component', () => {
       it('should not move to next step when current step is invalid', () => {
         stepper.selectedIndex = 1; // Surveys step (invalid)
 
-        stepper.goToNextStep();
+        stepper['goToNextStep']();
 
         expect(stepper.selectedIndex).toBe(1);
       });
@@ -87,7 +87,7 @@ describe('Stepper Component', () => {
       it('should not move beyond last step', () => {
         stepper.selectedIndex = 5; // Last step
 
-        stepper.goToNextStep();
+        stepper['goToNextStep']();
 
         expect(stepper.selectedIndex).toBe(5);
       });
@@ -97,7 +97,7 @@ describe('Stepper Component', () => {
       it('should move to previous step when not on first step', () => {
         stepper.selectedIndex = 2;
 
-        stepper.goToPreviousStep();
+        stepper['goToPreviousStep']();
 
         expect(stepper.selectedIndex).toBe(1);
       });
@@ -105,7 +105,7 @@ describe('Stepper Component', () => {
       it('should not move before first step', () => {
         stepper.selectedIndex = 0;
 
-        stepper.goToPreviousStep();
+        stepper['goToPreviousStep']();
 
         expect(stepper.selectedIndex).toBe(0);
       });
@@ -115,12 +115,12 @@ describe('Stepper Component', () => {
       it('should handle step selection correctly', () => {
         // Navigate to current step
         stepper.selectedIndex = 2;
-        stepper.selectStepByIndex(2);
+        stepper['selectStepByIndex'](2);
         expect(stepper.selectedIndex).toBe(2);
 
         // Navigate to previous completed steps
         stepper.selectedIndex = 3;
-        stepper.selectStepByIndex(0);
+        stepper['selectStepByIndex'](0);
         expect(stepper.selectedIndex).toBe(0);
       });
     });
@@ -131,15 +131,15 @@ describe('Stepper Component', () => {
       it('should validate next step navigation correctly', () => {
         // Valid step allows navigation
         stepper.selectedIndex = 0;
-        expect(stepper.canNavigateToNextStep()).toBe(true);
+        expect(stepper['canNavigateToNextStep']()).toBe(true);
 
         // Invalid step blocks navigation
         stepper.selectedIndex = 1;
-        expect(stepper.canNavigateToNextStep()).toBe(false);
+        expect(stepper['canNavigateToNextStep']()).toBe(false);
 
         // Last step blocks navigation
         stepper.selectedIndex = 5;
-        expect(stepper.canNavigateToNextStep()).toBe(false);
+        expect(stepper['canNavigateToNextStep']()).toBe(false);
       });
     });
 
@@ -147,18 +147,18 @@ describe('Stepper Component', () => {
       it('should handle navigation rules correctly', () => {
         // Allow navigation to current step
         stepper.selectedIndex = 2;
-        expect(stepper.canNavigateToStep(2)).toBe(true);
+        expect(stepper['canNavigateToStep'](2)).toBe(true);
 
         // Allow navigation to previous steps
         stepper.selectedIndex = 3;
-        expect(stepper.canNavigateToStep(1)).toBe(true);
+        expect(stepper['canNavigateToStep'](1)).toBe(true);
 
         // Allow navigation to next valid step
         stepper.selectedIndex = 0;
-        expect(stepper.canNavigateToStep(1)).toBe(true);
+        expect(stepper['canNavigateToStep'](1)).toBe(true);
 
         // Prevent navigation through invalid steps
-        expect(stepper.canNavigateToStep(2)).toBe(false);
+        expect(stepper['canNavigateToStep'](2)).toBe(false);
       });
     });
   });
@@ -166,16 +166,16 @@ describe('Stepper Component', () => {
   describe('Step State Properties', () => {
     it('should track navigation state correctly', () => {
       stepper.selectedIndex = 0;
-      expect(stepper.canGoNext).toBe(true);
-      expect(stepper.canGoPrevious).toBe(false);
-      expect(stepper.isFirstStep).toBe(true);
-      expect(stepper.isLastStep).toBe(false);
+      expect(stepper['canGoNext']).toBe(true);
+      expect(stepper['canGoPrevious']).toBe(false);
+      expect(stepper['isFirstStep']).toBe(true);
+      expect(stepper['isLastStep']).toBe(false);
 
       stepper.selectedIndex = 5;
-      expect(stepper.canGoNext).toBe(false);
-      expect(stepper.canGoPrevious).toBe(true);
-      expect(stepper.isFirstStep).toBe(false);
-      expect(stepper.isLastStep).toBe(true);
+      expect(stepper['canGoNext']).toBe(false);
+      expect(stepper['canGoPrevious']).toBe(true);
+      expect(stepper['isFirstStep']).toBe(false);
+      expect(stepper['isLastStep']).toBe(true);
     });
   });
 
@@ -183,12 +183,12 @@ describe('Stepper Component', () => {
     it('should return correct step classes', () => {
       stepper.selectedIndex = 2;
 
-      expect(stepper.getStepClasses(1)).toBe('bg-primary border-primary text-white');
-      expect(stepper.getStepClasses(2)).toBe('bg-[#282D39] border-[#282D39] text-white font-semibold');
-      expect(stepper.getStepClasses(4)).toBe('bg-primary border-primary text-white');
+      expect(stepper['getStepClasses'](1)).toBe('bg-primary border-primary text-white');
+      expect(stepper['getStepClasses'](2)).toBe('bg-[#282D39] border-[#282D39] text-white font-semibold');
+      expect(stepper['getStepClasses'](4)).toBe('bg-primary border-primary text-white');
 
-      expect(stepper.isStepDisabled(1)).toBe(false);
-      expect(stepper.isStepDisabled(4)).toBe(false);
+      expect(stepper['isStepDisabled'](1)).toBe(false);
+      expect(stepper['isStepDisabled'](4)).toBe(false);
     });
   });
 
@@ -207,8 +207,8 @@ describe('Stepper Component', () => {
 
   describe('Configuration Integration', () => {
     it('should use stepperConfig for validation logic', () => {
-      const getStepConfigSpy = jest.spyOn(stepper, 'getStepConfig');
-      stepper.canNavigateToNextStep();
+      const getStepConfigSpy = jest.spyOn(stepper as any, 'getStepConfig');
+      stepper['canNavigateToNextStep']();
       expect(getStepConfigSpy).toHaveBeenCalled();
     });
   });
@@ -216,23 +216,23 @@ describe('Stepper Component', () => {
   describe('Edge Cases', () => {
     it('should handle boundary conditions safely', () => {
       stepper.selectedIndex = 0;
-      expect(stepper.canNavigateToStep(-1)).toBe(true);
-      expect(stepper.canNavigateToStep(10)).toBe(false);
+      expect(stepper['canNavigateToStep'](-1)).toBe(true);
+      expect(stepper['canNavigateToStep'](10)).toBe(false);
     });
   });
 
   describe('Complex Navigation', () => {
     it('should handle multi-step navigation with validation rules', () => {
       stepper.selectedIndex = 0;
-      stepper.goToNextStep();
+      stepper['goToNextStep']();
       expect(stepper.selectedIndex).toBe(1);
-      stepper.goToNextStep();
+      stepper['goToNextStep']();
       expect(stepper.selectedIndex).toBe(1); // Cannot move from invalid step
 
       stepper.selectedIndex = 3;
-      expect(stepper.canNavigateToStep(0)).toBe(true);
-      expect(stepper.canNavigateToStep(4)).toBe(true);
-      expect(stepper.canNavigateToStep(5)).toBe(true);
+      expect(stepper['canNavigateToStep'](0)).toBe(true);
+      expect(stepper['canNavigateToStep'](4)).toBe(true);
+      expect(stepper['canNavigateToStep'](5)).toBe(true);
     });
   });
 
@@ -240,17 +240,17 @@ describe('Stepper Component', () => {
     it('should prevent navigation when current step has errors', () => {
       // Set up step with error
       stepper.selectedIndex = 0;
-      stepper.markStepAsError(0);
+      stepper['markStepAsError'](0);
 
       // Should not be able to navigate to next step
-      expect(stepper.canNavigateToNextStep()).toBe(false);
+      expect(stepper['canNavigateToNextStep']()).toBe(false);
 
       // Clear error
-      stepper.clearStepError(0);
-      stepper.markStepAsCompleted(0);
+      stepper['clearStepError'](0);
+      stepper['markStepAsCompleted'](0);
 
       // Should now be able to navigate
-      expect(stepper.canNavigateToNextStep()).toBe(true);
+      expect(stepper['canNavigateToNextStep']()).toBe(true);
     });
 
     it('should update step states when config changes', () => {
@@ -273,8 +273,8 @@ describe('Stepper Component', () => {
       stepper.selectedIndex = 0;
 
       // Check that step state was updated
-      expect(stepper.stepHasError(0)).toBe(true);
-      expect(stepper.canNavigateToNextStep()).toBe(false);
+      expect(stepper['stepHasError'](0)).toBe(true);
+      expect(stepper['canNavigateToNextStep']()).toBe(false);
     });
 
     it('should block navigation on optional steps when they have errors', () => {
@@ -298,13 +298,13 @@ describe('Stepper Component', () => {
       stepper.selectedIndex = 1;
 
       // Even though step is optional, error should block navigation
-      expect(stepper.stepHasError(1)).toBe(true);
-      expect(stepper.getStepConfig(1)?.optional).toBe(true);
-      expect(stepper.canNavigateToNextStep()).toBe(false);
+      expect(stepper['stepHasError'](1)).toBe(true);
+      expect(stepper['getStepConfig'](1)?.optional).toBe(true);
+      expect(stepper['canNavigateToNextStep']()).toBe(false);
 
       // Clear error - now should be able to navigate
-      stepper.clearStepError(1);
-      expect(stepper.canNavigateToNextStep()).toBe(true);
+      stepper['clearStepError'](1);
+      expect(stepper['canNavigateToNextStep']()).toBe(true);
     });
   });
 });

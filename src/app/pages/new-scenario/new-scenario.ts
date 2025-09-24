@@ -85,7 +85,6 @@ export class NewScenario {
   }
 
 
-  // Track touched state for each form group
   private readonly productGroupTouched = signal(false);
   private readonly respondentGroupTouched = signal(false);
   private readonly criteriaGroupTouched = signal(false);
@@ -93,96 +92,80 @@ export class NewScenario {
   private readonly enpsSettingsGroupTouched = signal(false);
   private readonly commentsGroupTouched = signal(false);
 
-  // Cache selected groups to avoid filtering on every access
   private readonly selectedCriteriaGroups = computed(() =>
     this.criteriaGroups().filter(group => group.selected)
   );
 
-  criteriaGroupStatus(): string {
-    const selectedGroups = this.selectedCriteriaGroups();
+  protected criteriaGroupStatus(): string {
+    const selectedTypes = this.selectedCriteriaTypes();
 
-    // If no criteria are selected, consider it valid (optional step)
-    if (selectedGroups.length === 0) {
+    if (selectedTypes.length === 0) {
       return 'VALID';
     }
 
-    // Check if all selected criteria have valid distributions
-    const hasEmptyDistributions = selectedGroups.some(group => group.items.length === 0);
-    if (hasEmptyDistributions) {
-      return 'INVALID';
-    }
+    for (const criteriaType of selectedTypes) {
+      const items = this.getDistributionItemsByType(criteriaType);
 
-    // Check if all items have valid percentages
-    const hasInvalidPercentages = selectedGroups.some(group =>
-      group.items.some(item => !item.percentage || item.percentage <= 0)
-    );
-    if (hasInvalidPercentages) {
-      return 'INVALID';
-    }
+      if (items.length === 0) {
+        return 'INVALID';
+      }
 
-    // Check for duplicates in signal state (immediate feedback)
-    const hasDuplicatesInSignalState = selectedGroups.some(group =>
-      this.hasDuplicatesInCriteriaType(group.type)
-    );
-    if (hasDuplicatesInSignalState) {
-      return 'INVALID';
-    }
+      for (const item of items) {
+        const criteriaId = item.get('criteriaId')?.value;
+        const percentage = item.get('percentage')?.value;
 
-    // For required field validation, check individual controls instead of FormArray status
-    // to avoid timing issues with the duplicateDistributionValueValidator
-    const hasRequiredFieldErrors = selectedGroups.some(group =>
-      group.items.some(item => !item.criteriaId || item.criteriaId.trim() === '')
-    );
-    if (hasRequiredFieldErrors) {
-      return 'INVALID';
+        if (!criteriaId || criteriaId.trim() === '') {
+          return 'INVALID';
+        }
+
+        if (!percentage || percentage <= 0) {
+          return 'INVALID';
+        }
+      }
+
+      if (this.hasDuplicatesInType(criteriaType)) {
+        return 'INVALID';
+      }
     }
 
     return 'VALID';
   }
 
-  criteriaGroupValid(): boolean {
+  protected criteriaGroupValid(): boolean {
     return this.criteriaGroupStatus() === 'VALID';
   }
 
-  // Helper methods for error detection (touched AND invalid)
-  productGroupHasError(): boolean {
+  protected productGroupHasError(): boolean {
     return this.productGroupTouched() && this.productGroup.status !== 'VALID';
   }
 
-  respondentGroupHasError(): boolean {
+  protected respondentGroupHasError(): boolean {
     return this.respondentGroupTouched() && (this.respondentsTotal.invalid || false);
   }
 
-  criteriaGroupHasError(): boolean {
-    // For criteria step, show errors immediately when validation fails
-    // (don't wait for touched state due to complex validation scenarios)
+  protected criteriaGroupHasError(): boolean {
     const hasValidationErrors = this.criteriaGroupStatus() !== 'VALID';
-    const hasActiveInteraction = this.selectedCriteriaGroups().length > 0;
+    const hasActiveInteraction = this.selectedCriteriaTypes().length > 0;
 
-    // Show errors if:
-    // 1. User has interacted with criteria (touched) AND there are validation errors, OR
-    // 2. User has selected criteria AND there are validation errors (immediate feedback)
     return (this.criteriaGroupTouched() && hasValidationErrors) ||
            (hasActiveInteraction && hasValidationErrors);
   }
 
-  impactDriversGroupHasError(): boolean {
+  protected impactDriversGroupHasError(): boolean {
     return this.impactDriversGroupTouched() && this.impactDriversGroup.status !== 'VALID';
   }
 
-  enpsSettingsGroupHasError(): boolean {
+  protected enpsSettingsGroupHasError(): boolean {
     return this.enpsSettingsGroupTouched() && this.enpsSettingsGroup.status !== 'VALID';
   }
 
-  commentsGroupHasError(): boolean {
+  protected commentsGroupHasError(): boolean {
     return this.commentsGroupTouched() && this.commentsGroup.status !== 'VALID';
   }
 
-  // Get step configuration (recalculated on each call for manual change detection)
-  stepperConfig(): StepperConfig {
+  protected stepperConfig(): StepperConfig {
     const completedSteps = this.completedSteps();
 
-    // Cache validation states to prevent repeated calculations
     const productValid = this.productGroup.status === 'VALID';
     const respondentValid = this.respondentsTotal.valid || false;
     const driversValid = this.impactDriversGroup.status === 'VALID';
@@ -262,7 +245,6 @@ export class NewScenario {
 
   private readonly criteriaGroups = signal<CriteriaGroup[]>([]);
 
-  // Track which steps have been visited and completed by the user
   private readonly completedSteps = signal<Set<string>>(new Set());
 
   readonly currentPageSurveys = computed(() => {
@@ -298,26 +280,35 @@ export class NewScenario {
     return groups.filter(group => group.selected).map(group => group.type);
   });
 
-  readonly criteriaValidation = computed(() => {
-    const selectedGroups = this.selectedCriteriaGroups();
+  protected criteriaValidation(): boolean {
+      const uniqueTypes = new Set<CriteriaType>();
+    for (const control of this.criteriaDistributions.controls) {
+      const criteriaType = control.get('criteriaType')?.value;
+      if (criteriaType) {
+        uniqueTypes.add(criteriaType);
+      }
+    }
+    const selectedTypes = Array.from(uniqueTypes);
 
-    if (selectedGroups.length === 0) {
+    if (selectedTypes.length === 0) {
       return false;
     }
 
-    return selectedGroups.every(group => {
-      if (group.items.length === 0) return false;
+    return selectedTypes.every(criteriaType => {
+      const items = this.getDistributionItemsByType(criteriaType);
+      if (items.length === 0) return false;
 
-      return group.items.every(item =>
-        item.criteriaId && item.criteriaId.trim() !== '' && item.percentage != null && item.percentage > 0
-      );
+      return items.every(item => {
+        const criteriaId = item.get('criteriaId')?.value;
+        const percentage = item.get('percentage')?.value;
+        return criteriaId && criteriaId.trim() !== '' && percentage != null && percentage > 0;
+      });
     });
-  });
+  }
 
   private readonly cdr = inject(ChangeDetectorRef);
 
-  // Helper methods for calculations (replacing computed properties)
-  impactDriversTotal(): number {
+  protected impactDriversTotal(): number {
     const values = this.impactDriversGroup.value;
     const driversValues = [
       Number(values.innovation) || 0,
@@ -333,7 +324,7 @@ export class NewScenario {
     return Math.round(average * 100) / 100;
   }
 
-  enpsSettingsTotal(): number {
+  protected enpsSettingsTotal(): number {
     const values = this.enpsSettingsGroup.value;
     const enpsValues = [
       Number(values.promoters) || 0,
@@ -347,23 +338,14 @@ export class NewScenario {
   }
 
   constructor() {
-    // Initialize first step as visited
     this.completedSteps.update(steps => {
       steps.add('product');
       return new Set(steps);
     });
   }
 
-  // Method to mark a step as completed when user moves forward
-  markStepAsCompleted(stepId: string): void {
-    this.completedSteps.update(steps => {
-      steps.add(stepId);
-      return new Set(steps);
-    });
-  }
 
-  // Methods to mark form groups as touched
-  markStepAsTouched(stepId: string): void {
+  private markStepAsTouched(stepId: string): void {
     switch (stepId) {
       case 'product':
         this.productGroupTouched.set(true);
@@ -386,16 +368,13 @@ export class NewScenario {
     }
   }
 
-  // Method to mark a form group as touched when user interacts with it
-  markFormGroupAsTouched(stepId: string): void {
+  protected markFormGroupAsTouched(stepId: string): void {
     this.markStepAsTouched(stepId);
 
-    // Trigger change detection for immediate error state updates
     this.cdr.detectChanges();
   }
 
-  // Method to check if user can complete current step (has validation or is optional)
-  canCompleteCurrentStep(stepIndex: number): boolean {
+  protected canCompleteCurrentStep(stepIndex: number): boolean {
     const steps = this.stepperConfig().steps;
     if (stepIndex >= steps.length) return false;
 
@@ -405,32 +384,24 @@ export class NewScenario {
     return step.completed || false;
   }
 
-  // Handle step changes from stepper component
   protected onStepChanged(event: { fromIndex: number; toIndex: number; stepId: string }): void {
-    // Mark the new step as visited
     this.completedSteps.update(steps => {
       steps.add(event.stepId);
       return new Set(steps);
     });
 
-    // Mark the previous step as touched when user moves away from it
     const steps = this.stepperConfig().steps;
     if (event.fromIndex >= 0 && event.fromIndex < steps.length) {
       const fromStepId = steps[event.fromIndex].id;
       this.markStepAsTouched(fromStepId);
     }
 
-    // Trigger change detection for immediate error state updates
     this.cdr.detectChanges();
   }
 
-  // Check if criteria step is completed - only when user has actually engaged
   private isCriteriaStepCompleted(hasVisited: boolean): boolean {
     if (!hasVisited) return false;
 
-    // For criteria step, consider it complete if:
-    // 1. User has visited AND no criteria are selected (user chose to skip)
-    // 2. User has visited AND criteria are properly configured
     const selectedGroups = this.criteriaGroups().filter(group => group.selected);
     if (selectedGroups.length === 0) {
       return true; // User visited but chose not to add criteria
@@ -439,12 +410,9 @@ export class NewScenario {
     return this.criteriaValidation();
   }
 
-  // Check if comments step is completed - only when user has actually engaged
   private isCommentsStepCompleted(hasVisited: boolean): boolean {
     if (!hasVisited) return false;
 
-    // Comments step is complete when user has visited it
-    // (no validation required as it's optional)
     return true;
   }
 
@@ -453,7 +421,7 @@ export class NewScenario {
     this.currentCommentSection.set(section);
   }
 
-  toggleSurvey(surveyId: string): void {
+  protected toggleSurvey(surveyId: string): void {
     this.allSurveys.update(surveys =>
       surveys.map(survey =>
         survey.id === surveyId
@@ -465,18 +433,18 @@ export class NewScenario {
     this.updateSelectedSurveys();
   }
 
-  areAllCurrentPageSurveysSelected(): boolean {
+  protected areAllCurrentPageSurveysSelected(): boolean {
     const currentSurveys = this.currentPageSurveys();
     return currentSurveys.length > 0 && currentSurveys.every(survey => survey.selected);
   }
 
-  areSomeCurrentPageSurveysSelected(): boolean {
+  protected areSomeCurrentPageSurveysSelected(): boolean {
     const currentSurveys = this.currentPageSurveys();
     const selectedCount = currentSurveys.filter(survey => survey.selected).length;
     return selectedCount > 0 && selectedCount < currentSurveys.length;
   }
 
-  toggleAllCurrentPageSurveys(): void {
+  protected toggleAllCurrentPageSurveys(): void {
     const currentSurveys = this.currentPageSurveys();
     const shouldSelectAll = !this.areAllCurrentPageSurveysSelected();
 
@@ -493,7 +461,7 @@ export class NewScenario {
   }
 
 
-  goToPage(page: number): void {
+  protected goToPage(page: number): void {
     const currentPagination = this.pagination();
     if (page >= 1 && page <= currentPagination.totalPages) {
       this.pagination.update(pagination => ({
@@ -503,7 +471,7 @@ export class NewScenario {
     }
   }
 
-  isProductGroupEmpty(): boolean {
+  private isProductGroupEmpty(): boolean {
     const productValues = this.productGroup.value;
 
     const hasProductData = productValues.title || productValues.tenant ||
@@ -513,7 +481,7 @@ export class NewScenario {
     return !hasProductData;
   }
 
-  onCancel(): void {
+  protected onCancel(): void {
     if (this.isProductGroupEmpty()) {
       this.router.navigate(['/dashboard']);
     } else {
@@ -525,7 +493,7 @@ export class NewScenario {
     }
   }
 
-  onSubmit(): void {
+  protected onSubmit(): void {
     if (this.scenarioForm.valid) {
       const formValue = this.scenarioForm.value;
       console.log('Form submitted with values:', formValue);
@@ -533,7 +501,6 @@ export class NewScenario {
     } else {
       console.log('Form is invalid. Please check all required fields.');
       this.markFormGroupTouched(this.scenarioForm);
-      // Mark all steps as touched to show error states
       this.markAllStepsAsTouched();
 
       // Trigger change detection for immediate error state updates
@@ -541,7 +508,6 @@ export class NewScenario {
     }
   }
 
-  // Mark all steps as touched to trigger error display
   private markAllStepsAsTouched(): void {
     this.productGroupTouched.set(true);
     this.respondentGroupTouched.set(true);
@@ -570,7 +536,7 @@ export class NewScenario {
     });
   }
 
-  toggleCriterion(criteriaType: CriteriaType): void {
+  protected toggleCriterion(criteriaType: CriteriaType): void {
     this.criteriaGroups.update(groups => {
       const existingGroupIndex = groups.findIndex(g => g.type === criteriaType);
 
@@ -595,79 +561,87 @@ export class NewScenario {
       return [...groups];
     });
 
-    // Trigger change detection for immediate UI updates
     this.cdr.detectChanges();
   }
 
-  private createDistributionFormGroup(criteriaId: string = '', percentage: number | null = null): FormGroup {
+  private createDistributionFormGroup(criteriaType: CriteriaType, criteriaId: string = '', percentage: number | null = null): FormGroup {
     return new FormGroup({
-      value: new FormControl(criteriaId, [Validators.required]),
+      criteriaType: new FormControl(criteriaType, [Validators.required]),
+      criteriaId: new FormControl(criteriaId, [Validators.required]),
       percentage: new FormControl(percentage, [Validators.required, Validators.min(0), Validators.max(100)])
     });
   }
 
-  addDistributionItem(criteriaType: CriteriaType, criteriaId: string, criteriaName: string): void {
-    // Check if this criteria is already in the FormArray
-    const distributionsArray = this.criteriaDistributions;
-    const existingControl = distributionsArray.controls.find(control =>
-      control.get('value')?.value === criteriaId
-    );
-
-    if (!existingControl) {
-      // Add new FormGroup to the FormArray
-      const distributionGroup = this.createDistributionFormGroup(criteriaId);
-      distributionsArray.push(distributionGroup);
-
-      // Force FormArray validation update
-      distributionsArray.updateValueAndValidity();
+  protected addDistributionItem(criteriaType: CriteriaType, criteriaId: string = ''): void {
+    if (criteriaId) {
+      const existingControl = this.criteriaDistributions.controls.find(control =>
+        control.get('criteriaId')?.value === criteriaId
+      );
+      if (existingControl) return;
     }
 
-    // Also update the signal for UI display
-    this.updateCriteriaGroup(criteriaType, (group) => {
-      const existingItemIndex = group.items.findIndex(item => item.criteriaId === criteriaId);
-      if (existingItemIndex === -1) {
-        group.items.push({
-          criteriaId,
-          criteriaName,
-          percentage: null
-        });
-      }
-    });
+    const distributionGroup = this.createDistributionFormGroup(criteriaType, criteriaId, null);
+    this.criteriaDistributions.push(distributionGroup);
 
-    // Trigger change detection for immediate UI updates
+    this.criteriaDistributions.updateValueAndValidity();
+
     this.cdr.detectChanges();
   }
 
-  removeDistributionItem(criteriaType: CriteriaType, itemIndex: number): void {
-    const group = this.getCriteriaGroup(criteriaType);
-    if (!group || itemIndex >= group.items.length) return;
+  protected getDistributionItemsByType(criteriaType: CriteriaType): FormGroup[] {
+    return this.criteriaDistributions.controls.filter(control =>
+      control.get('criteriaType')?.value === criteriaType
+    ) as FormGroup[];
+  }
 
-    // Remove from FormArray using the FormArray index
-    const formArrayIndex = this.getFormArrayIndexForItem(criteriaType, itemIndex);
-    const distributionsArray = this.criteriaDistributions;
+  protected getCriteriaName(criteriaType: CriteriaType): string {
+    const criteria = this.availableCriteria.find(c => c.type === criteriaType);
+    return criteria ? criteria.name : criteriaType;
+  }
 
-    if (formArrayIndex !== -1 && formArrayIndex < distributionsArray.length) {
-      distributionsArray.removeAt(formArrayIndex);
+  protected getDistributionItemsCount(criteriaType: CriteriaType): number {
+    return this.getDistributionItemsByType(criteriaType).length;
+  }
 
-      // Force FormArray validation update after removal
-      distributionsArray.updateValueAndValidity();
+  protected getTotalPercentageForType(criteriaType: CriteriaType): number {
+    const items = this.getDistributionItemsByType(criteriaType);
+    const percentages = items
+      .map(item => Number(item.get('percentage')?.value) || 0)
+      .filter(p => p > 0);
+
+    const average = percentages.length > 0
+      ? percentages.reduce((sum, p) => sum + p, 0) / percentages.length
+      : 0;
+    return Math.round(average * 100) / 100;
+  }
+
+  protected hasDuplicatesInType(criteriaType: CriteriaType): boolean {
+    const items = this.getDistributionItemsByType(criteriaType);
+    const values = items
+      .map(item => item.get('criteriaId')?.value)
+      .filter(v => v && v.trim() !== '');
+    const uniqueValues = new Set(values);
+    return values.length !== uniqueValues.size;
+  }
+
+  protected removeDistributionItem(criteriaType: CriteriaType, itemIndex: number): void {
+    const itemsOfType = this.getDistributionItemsByType(criteriaType);
+    if (itemIndex < 0 || itemIndex >= itemsOfType.length) return;
+
+    const itemToRemove = itemsOfType[itemIndex];
+    const formArrayIndex = this.criteriaDistributions.controls.indexOf(itemToRemove);
+
+    if (formArrayIndex !== -1) {
+      this.criteriaDistributions.removeAt(formArrayIndex);
+      this.criteriaDistributions.updateValueAndValidity();
     }
 
-    // Also update the signal for UI display
-    this.updateCriteriaGroup(criteriaType, (group) => {
-      group.items.splice(itemIndex, 1);
-      this.updateCriteriaTotalPercentage(criteriaType);
-    });
-
-    // Trigger change detection for immediate UI updates
     this.cdr.detectChanges();
   }
 
-  updateDistributionPercentage(criteriaType: CriteriaType, criteriaId: string, percentage: number): void {
-    // Update FormControl value
-    const distributionsArray = this.criteriaDistributions;
-    const control = distributionsArray.controls.find(control =>
-      control.get('value')?.value === criteriaId
+  protected updateDistributionPercentage(_criteriaType: CriteriaType, criteriaId: string, percentage: number): void {
+    const control = this.criteriaDistributions.controls.find(control =>
+      control.get('criteriaId')?.value === criteriaId
     );
 
     if (control) {
@@ -675,36 +649,21 @@ export class NewScenario {
       percentageControl?.setValue(percentage);
       percentageControl?.markAsTouched();
 
-      // Force FormArray validation update after removal
-      distributionsArray.updateValueAndValidity();
-      
+      // Force FormArray validation update
+      this.criteriaDistributions.updateValueAndValidity();
+
+      // Trigger change detection for immediate UI updates
       this.cdr.detectChanges();
     }
-
-    // Also update the signal for UI display
-    this.criteriaGroups.update(groups => {
-      const groupIndex = groups.findIndex(g => g.type === criteriaType);
-      if (groupIndex >= 0) {
-        const itemIndex = groups[groupIndex].items.findIndex(item => item.criteriaId === criteriaId);
-        if (itemIndex >= 0) {
-          groups[groupIndex].items[itemIndex].percentage = percentage;
-          this.updateCriteriaTotalPercentage(criteriaType);
-        }
-      }
-      return [...groups];
-    });
-
-    // Trigger change detection for immediate UI updates
-    this.cdr.detectChanges();
   }
 
-  public updateDistributionPercentageFromEvent(criteriaType: CriteriaType, criteriaId: string, event: Event): void {
+  protected updateDistributionPercentageFromEvent(criteriaType: CriteriaType, criteriaId: string, event: Event): void {
     const target = event.target as HTMLInputElement;
     const percentage = Number(target.value) || 0;
     this.updateDistributionPercentage(criteriaType, criteriaId, percentage);
   }
 
-  public updateDistributionPercentageFromEventByIndex(criteriaType: CriteriaType, itemIndex: number, event: Event): void {
+  protected updateDistributionPercentageFromEventByIndex(criteriaType: CriteriaType, itemIndex: number, event: Event): void {
     const target = event.target as HTMLInputElement;
     const percentage = Number(target.value) || 0;
 
@@ -715,7 +674,6 @@ export class NewScenario {
       percentageControl?.markAsTouched();
     }
 
-    // Also update the signal for UI display
     this.criteriaGroups.update(groups => {
       const groupIndex = groups.findIndex(g => g.type === criteriaType);
       if (groupIndex >= 0 && groups[groupIndex].items[itemIndex]) {
@@ -725,22 +683,19 @@ export class NewScenario {
       return [...groups];
     });
 
-    // Trigger change detection for immediate error state updates
     this.cdr.detectChanges();
   }
 
-  public updateDistributionItem(criteriaType: CriteriaType, itemIndex: number, event: Event): void {
+  protected updateDistributionItem(criteriaType: CriteriaType, itemIndex: number, event: Event): void {
     const target = event.target as HTMLSelectElement;
     const selectedOptionId = target.value;
 
-    // Always mark as touched when value changes
     const control = this.getDistributionControlByIndex(criteriaType, itemIndex);
     if (control) {
-      const valueControl = control.get('value');
+      const valueControl = control.get('criteriaId');
       valueControl?.setValue(selectedOptionId);
       valueControl?.markAsTouched();
 
-      // Force FormArray validation update after value change
       this.criteriaDistributions.updateValueAndValidity();
     }
 
@@ -757,7 +712,6 @@ export class NewScenario {
         });
       }
     } else {
-      // Clear the criteria data when empty option is selected
       this.criteriaGroups.update(groups => {
         const groupIndex = groups.findIndex(g => g.type === criteriaType);
         if (groupIndex >= 0 && groups[groupIndex].items[itemIndex]) {
@@ -768,7 +722,6 @@ export class NewScenario {
       });
     }
 
-    // Trigger change detection for immediate error state updates
     this.cdr.detectChanges();
   }
 
@@ -789,26 +742,12 @@ export class NewScenario {
     });
   }
 
-  isCriterionSelected(criteriaType: CriteriaType): boolean {
+  protected isCriterionSelected(criteriaType: CriteriaType): boolean {
     return this.criteriaGroups().some(group => group.type === criteriaType && group.selected);
   }
 
-  getCriteriaGroup(criteriaType: CriteriaType): CriteriaGroup | undefined {
+  private getCriteriaGroup(criteriaType: CriteriaType): CriteriaGroup | undefined {
     return this.criteriaGroups().find(group => group.type === criteriaType);
-  }
-
-  private findCriteriaGroupIndex(criteriaType: CriteriaType): number {
-    return this.criteriaGroups().findIndex(g => g.type === criteriaType);
-  }
-
-  private updateCriteriaGroup(criteriaType: CriteriaType, updater: (group: CriteriaGroup, index: number) => void): void {
-    this.criteriaGroups.update(groups => {
-      const groupIndex = this.findCriteriaGroupIndex(criteriaType);
-      if (groupIndex >= 0) {
-        updater(groups[groupIndex], groupIndex);
-      }
-      return [...groups];
-    });
   }
 
   private getSelectedSurveyIds(): string[] {
@@ -819,39 +758,32 @@ export class NewScenario {
     this.productGroup.controls['selectedSurveys'].setValue(this.getSelectedSurveyIds());
   }
 
-  getDistributionControl(criteriaId: string): FormGroup | undefined {
+  private getDistributionControl(criteriaId: string): FormGroup | undefined {
     return this.criteriaDistributions.controls.find(control =>
-      control.get('value')?.value === criteriaId
+      control.get('criteriaId')?.value === criteriaId
     ) as FormGroup;
   }
 
-  getDistributionValueControl(criteriaId: string): FormControl | undefined {
+  protected getDistributionValueControl(criteriaId: string): FormControl | undefined {
     const control = this.getDistributionControl(criteriaId);
-    return control?.get('value') as FormControl;
+    return control?.get('criteriaId') as FormControl;
   }
 
-  getDistributionPercentageControl(criteriaId: string): FormControl | undefined {
+  protected getDistributionPercentageControl(criteriaId: string): FormControl | undefined {
     const control = this.getDistributionControl(criteriaId);
     return control?.get('percentage') as FormControl;
   }
 
   protected getDistributionControlByIndex(criteriaType: CriteriaType, itemIndex: number): FormGroup | undefined {
-    const group = this.getCriteriaGroup(criteriaType);
-    if (!group || itemIndex >= group.items.length) return undefined;
+    const itemsOfType = this.getDistributionItemsByType(criteriaType);
+    if (itemIndex < 0 || itemIndex >= itemsOfType.length) return undefined;
 
-    const item = group.items[itemIndex];
-
-    if (!item.criteriaId) {
-      const formArrayIndex = this.getFormArrayIndexForItem(criteriaType, itemIndex);
-      return this.criteriaDistributions.at(formArrayIndex) as FormGroup;
-    }
-
-    return this.getDistributionControl(item.criteriaId);
+    return itemsOfType[itemIndex];
   }
 
   protected getDistributionValueControlByIndex(criteriaType: CriteriaType, itemIndex: number): FormControl | undefined {
     const control = this.getDistributionControlByIndex(criteriaType, itemIndex);
-    return control?.get('value') as FormControl;
+    return control?.get('criteriaId') as FormControl;
   }
 
   protected getDistributionPercentageControlByIndex(criteriaType: CriteriaType, itemIndex: number): FormControl | undefined {
@@ -859,27 +791,12 @@ export class NewScenario {
     return control?.get('percentage') as FormControl;
   }
 
-  public markDistributionValueAsTouched(criteriaType: CriteriaType, itemIndex: number): void {
+  protected markDistributionValueAsTouched(criteriaType: CriteriaType, itemIndex: number): void {
     const control = this.getDistributionValueControlByIndex(criteriaType, itemIndex);
     control?.markAsTouched();
     this.cdr.detectChanges();
   }
 
-  private getFormArrayIndexForItem(criteriaType: CriteriaType, itemIndex: number): number {
-    const groups = this.criteriaGroups();
-    let formArrayIndex = 0;
-
-    for (const group of groups) {
-      if (group.type === criteriaType) {
-        return formArrayIndex + itemIndex;
-      }
-      if (group.selected) {
-        formArrayIndex += group.items.length;
-      }
-    }
-
-    return formArrayIndex;
-  }
 
   private clearCriteriaFromFormArray(criteriaType: CriteriaType): void {
     const group = this.getCriteriaGroup(criteriaType);
@@ -889,33 +806,20 @@ export class NewScenario {
 
     for (let i = this.criteriaDistributions.length - 1; i >= 0; i--) {
       const control = this.criteriaDistributions.at(i);
-      const controlValue = control.get('value')?.value;
+      const controlValue = control.get('criteriaId')?.value;
 
       if (criteriaIds.includes(controlValue)) {
         this.criteriaDistributions.removeAt(i);
       }
     }
 
-    // Force FormArray validation update after clearing criteria
     this.criteriaDistributions.updateValueAndValidity();
 
-    // Trigger change detection for immediate UI updates
     this.cdr.detectChanges();
   }
 
-  hasDuplicatesInCriteriaType(criteriaType: CriteriaType): boolean {
-    const group = this.getCriteriaGroup(criteriaType);
-    if (!group || group.items.length <= 1) return false;
 
-    const values = group.items
-      .map(item => item.criteriaId)
-      .filter(id => id && id.trim() !== '');
-
-    const uniqueValues = new Set(values);
-    return values.length !== uniqueValues.size;
-  }
-
-  resetForm(): void {
+  private resetForm(): void {
     this.scenarioForm.reset();
     this.criteriaDistributions.clear();
     this.allSurveys.update(surveys =>
