@@ -1,7 +1,12 @@
 /**
+ * Generic data type for stepper steps to allow flexible step-specific data
+ */
+export type StepData = Record<string, unknown> | null;
+
+/**
  * Configuration for individual stepper steps
  */
-export type StepConfig = {
+export type StepConfig<T extends StepData = StepData> = {
   id: string;
   title: string;
   optional?: boolean;
@@ -9,15 +14,15 @@ export type StepConfig = {
   completed?: boolean;
   hasError?: boolean;
   disabled?: boolean;
-  data?: any;
+  data?: T;
 }
 
 /**
  * Configuration for the entire stepper component
  * Includes step definitions and validation state
  */
-export type StepperConfig = {
+export type StepperConfig<T extends StepData = StepData> = {
   title: string;
   role: string;
-  steps: StepConfig[];
+  steps: StepConfig<T>[];
 }

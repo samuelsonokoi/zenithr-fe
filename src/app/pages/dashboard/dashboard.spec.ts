@@ -3,10 +3,19 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Dashboard } from './dashboard';
 import { RouterModule } from '@angular/router';
 import { ScenarioTableData } from '../../core/models/scenario-table.model';
+import { InputChangeEvent } from '../../core/types/form-events';
 
 describe('Dashboard', () => {
   let component: Dashboard;
   let fixture: ComponentFixture<Dashboard>;
+
+  const createMockInputEvent = (value: string): InputChangeEvent => {
+    return {
+      target: { value } as HTMLInputElement,
+      preventDefault: jest.fn(),
+      stopPropagation: jest.fn()
+    } as unknown as InputChangeEvent;
+  };
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -33,7 +42,7 @@ describe('Dashboard', () => {
 
   describe('Search Functionality', () => {
     it('should filter scenarios by name (case insensitive)', () => {
-      component['updateSearchTerm']({ target: { value: 'scenario a' } } as any);
+      component['updateSearchTerm'](createMockInputEvent('scenario a'));
 
       const filtered = component['filteredTableData']();
       expect(filtered.length).toBe(1);
@@ -41,14 +50,14 @@ describe('Dashboard', () => {
     });
 
     it('should filter scenarios by partial name match', () => {
-      component['updateSearchTerm']({ target: { value: 'Scenario' } } as any);
+      component['updateSearchTerm'](createMockInputEvent('Scenario'));
 
       const filtered = component['filteredTableData']();
       expect(filtered.length).toBe(3); // All scenarios contain 'Scenario'
     });
 
     it('should filter scenarios by respondent count', () => {
-      component['updateSearchTerm']({ target: { value: '500' } } as any);
+      component['updateSearchTerm'](createMockInputEvent('500'));
 
       const filtered = component['filteredTableData']();
       expect(filtered.length).toBe(1);
@@ -56,14 +65,14 @@ describe('Dashboard', () => {
     });
 
     it('should filter scenarios by partial respondent count', () => {
-      component['updateSearchTerm']({ target: { value: '0' } } as any);
+      component['updateSearchTerm'](createMockInputEvent('0'));
 
       const filtered = component['filteredTableData']();
       expect(filtered.length).toBe(3); // All scenarios have '0' in respondent count
     });
 
     it('should filter scenarios by score range start', () => {
-      component['updateSearchTerm']({ target: { value: '20' } } as any);
+      component['updateSearchTerm'](createMockInputEvent('20'));
 
       const filtered = component['filteredTableData']();
       expect(filtered.length).toBe(1);
@@ -71,7 +80,7 @@ describe('Dashboard', () => {
     });
 
     it('should filter scenarios by score range end', () => {
-      component['updateSearchTerm']({ target: { value: '100' } } as any);
+      component['updateSearchTerm'](createMockInputEvent('100'));
 
       const filtered = component['filteredTableData']();
       expect(filtered.length).toBe(1);
@@ -79,7 +88,7 @@ describe('Dashboard', () => {
     });
 
     it('should filter scenarios by range format', () => {
-      component['updateSearchTerm']({ target: { value: '10-90' } } as any);
+      component['updateSearchTerm'](createMockInputEvent('10-90'));
 
       const filtered = component['filteredTableData']();
       expect(filtered.length).toBe(1);
@@ -88,14 +97,14 @@ describe('Dashboard', () => {
     });
 
     it('should return empty array for non-matching search', () => {
-      component['updateSearchTerm']({ target: { value: 'nonexistent' } } as any);
+      component['updateSearchTerm'](createMockInputEvent('nonexistent'));
 
       const filtered = component['filteredTableData']();
       expect(filtered.length).toBe(0);
     });
 
     it('should trim whitespace from search term', () => {
-      component['updateSearchTerm']({ target: { value: '  scenario a  ' } } as any);
+      component['updateSearchTerm'](createMockInputEvent('  scenario a  '));
 
       const filtered = component['filteredTableData']();
       expect(filtered.length).toBe(1);
@@ -104,17 +113,17 @@ describe('Dashboard', () => {
 
     it('should handle empty search term after searching', () => {
       // First search for something
-      component['updateSearchTerm']({ target: { value: 'Scenario A' } } as any);
+      component['updateSearchTerm'](createMockInputEvent('Scenario A'));
       expect(component['filteredTableData']().length).toBe(1);
 
       // Then clear the search
-      component['updateSearchTerm']({ target: { value: '' } } as any);
+      component['updateSearchTerm'](createMockInputEvent(''));
       expect(component['filteredTableData']()).toEqual(component['tableData']());
     });
 
     it('should update search term signal when updateSearchTerm is called', () => {
       const testValue = 'test search';
-      component['updateSearchTerm']({ target: { value: testValue } } as any);
+      component['updateSearchTerm'](createMockInputEvent(testValue));
 
       expect(component['searchTerm']()).toBe(testValue);
     });

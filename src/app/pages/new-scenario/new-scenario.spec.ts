@@ -7,17 +7,25 @@ import { CdkStepperModule } from '@angular/cdk/stepper';
 import { NewScenario } from './new-scenario';
 import { Stepper } from '../../components/stepper/stepper';
 import { CriteriaType } from '../../core/models/scenario.model';
+import { InputChangeEvent } from '../../core/types/form-events';
 
 // Mock the Router
 const mockRouter = {
   navigate: jest.fn()
 };
 
-
 describe('NewScenario Component', () => {
   let component: NewScenario;
   let fixture: ComponentFixture<NewScenario>;
   let compiled: HTMLElement;
+
+  const createMockInputEvent = (value: string): InputChangeEvent => {
+    return {
+      target: { value } as HTMLInputElement,
+      preventDefault: jest.fn(),
+      stopPropagation: jest.fn()
+    } as unknown as InputChangeEvent;
+  };
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -381,7 +389,7 @@ describe('NewScenario Component', () => {
       });
 
       it('should handle input event and update percentage', () => {
-        const event = { target: { value: '75' } } as any;
+        const event = createMockInputEvent('75');
 
         component['updateDistributionPercentageFromEvent'](CriteriaType.GENDER, 'male', event);
 
@@ -390,7 +398,7 @@ describe('NewScenario Component', () => {
       });
 
       it('should handle invalid input gracefully', () => {
-        const event = { target: { value: 'invalid' } } as any;
+        const event = createMockInputEvent('invalid');
 
         component['updateDistributionPercentageFromEvent'](CriteriaType.GENDER, 'male', event);
 
