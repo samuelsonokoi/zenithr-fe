@@ -48,8 +48,8 @@ describe('NewScenario Component', () => {
       expect(component).toBeTruthy();
       expect(component.scenarioForm).toBeTruthy();
       expect(component.scenarioForm.get('product')).toBeTruthy();
-      expect(component.scenarioForm.get('respondents')).toBeTruthy();
-      expect(component.scenarioForm.get('criteria')).toBeTruthy();
+      expect(component.scenarioForm.get('respondentsTotal')).toBeTruthy();
+      expect(component.scenarioForm.get('criteriaDistributions')).toBeTruthy();
       expect(component.scenarioForm.get('impactDrivers')).toBeTruthy();
       expect(component.scenarioForm.get('enpsSettings')).toBeTruthy();
       expect(component.scenarioForm.get('comments')).toBeTruthy();
@@ -86,12 +86,12 @@ describe('NewScenario Component', () => {
 
   describe('Respondents Form Validation', () => {
     beforeEach(() => {
-      const respondentsForm = component.scenarioForm.get('respondents');
-      respondentsForm?.markAllAsTouched();
+      const respondentsControl = component.scenarioForm.get('respondentsTotal');
+      respondentsControl?.markAsTouched();
     });
 
     it('should require total respondents field', () => {
-      const totalControl = component.scenarioForm.get('respondents.total');
+      const totalControl = component.scenarioForm.get('respondentsTotal');
       expect(totalControl?.valid).toBeFalsy();
       expect(totalControl?.errors?.['required']).toBeTruthy();
     });
@@ -178,7 +178,7 @@ describe('NewScenario Component', () => {
       component.scenarioForm.get('product.tenant')?.setValue('tenant1');
       component.scenarioForm.get('product.company')?.setValue('company1');
       component.scenarioForm.get('product.experienceProduct')?.setValue('product1');
-      component.scenarioForm.get('respondents.total')?.setValue('100');
+      component.scenarioForm.get('respondentsTotal')?.setValue('100');
 
       // Add required impact drivers
       component.scenarioForm.get('impactDrivers.innovation')?.setValue('80');
@@ -201,7 +201,7 @@ describe('NewScenario Component', () => {
     it('should submit valid form', () => {
       const navigateSpy = jest.spyOn(mockRouter, 'navigate');
 
-      component.onFinish();
+      component.onSubmit();
 
       expect(navigateSpy).toHaveBeenCalledWith(['/dashboard']);
     });
@@ -211,7 +211,7 @@ describe('NewScenario Component', () => {
       component.scenarioForm.reset();
       const navigateSpy = jest.spyOn(mockRouter, 'navigate');
 
-      component.onFinish();
+      component.onSubmit();
 
       expect(navigateSpy).not.toHaveBeenCalled();
     });
@@ -305,7 +305,7 @@ describe('NewScenario Component', () => {
         expect(criteriaGroup!.items[0].criteriaName).toBe('Male');
         expect(criteriaGroup!.items[0].percentage).toBeNull();
 
-        expect(component['distributionsArray'].length).toBe(1);
+        expect(component.criteriaDistributions.length).toBe(1);
         const formControl = component.getDistributionControl('male');
         expect(formControl!.get('value')!.value).toBe('male');
       });
@@ -316,7 +316,7 @@ describe('NewScenario Component', () => {
 
         const criteriaGroup = component.getCriteriaGroup(CriteriaType.GENDER);
         expect(criteriaGroup!.items).toHaveLength(1);
-        expect(component['distributionsArray'].length).toBe(1);
+        expect(component.criteriaDistributions.length).toBe(1);
       });
 
       it('should add multiple different items', () => {
@@ -325,7 +325,7 @@ describe('NewScenario Component', () => {
 
         const criteriaGroup = component.getCriteriaGroup(CriteriaType.GENDER);
         expect(criteriaGroup!.items).toHaveLength(2);
-        expect(component['distributionsArray'].length).toBe(2);
+        expect(component.criteriaDistributions.length).toBe(2);
       });
     });
 
@@ -342,7 +342,7 @@ describe('NewScenario Component', () => {
         const criteriaGroup = component.getCriteriaGroup(CriteriaType.GENDER);
         expect(criteriaGroup!.items).toHaveLength(1);
         expect(criteriaGroup!.items[0].criteriaId).toBe('female');
-        expect(component['distributionsArray'].length).toBe(1);
+        expect(component.criteriaDistributions.length).toBe(1);
       });
 
       it('should handle removing non-existent item gracefully', () => {
@@ -350,7 +350,7 @@ describe('NewScenario Component', () => {
 
         const criteriaGroup = component.getCriteriaGroup(CriteriaType.GENDER);
         expect(criteriaGroup!.items).toHaveLength(2);
-        expect(component['distributionsArray'].length).toBe(2);
+        expect(component.criteriaDistributions.length).toBe(2);
       });
     });
 
@@ -545,7 +545,7 @@ describe('NewScenario Component', () => {
 
         expect(component.scenarioForm.get('product.title')!.touched).toBe(true);
         expect(component.scenarioForm.get('product.tenant')!.touched).toBe(true);
-        expect(component.scenarioForm.get('respondents.total')!.touched).toBe(true);
+        expect(component.scenarioForm.get('respondentsTotal')!.touched).toBe(true);
         expect(component.scenarioForm.get('impactDrivers.innovation')!.touched).toBe(true);
 
         const distributionControl = component.getDistributionControl('male');
@@ -562,14 +562,14 @@ describe('NewScenario Component', () => {
         component.addDistributionItem(CriteriaType.GENDER, 'male', 'Male');
         component.addDistributionItem(CriteriaType.GENDER, 'female', 'Female');
 
-        expect(component['distributionsArray'].length).toBe(2);
+        expect(component.criteriaDistributions.length).toBe(2);
 
         component.resetForm();
 
         expect(component.scenarioForm.get('product.title')!.value).toBeNull();
         expect(component.currentPageSurveys().every(s => !s.selected)).toBe(true);
         expect(component['criteriaGroups']()).toEqual([]);
-        expect(component['distributionsArray'].length).toBe(0);
+        expect(component.criteriaDistributions.length).toBe(0);
 
         expect(typeof (component.productGroup.status === 'VALID')).toBe('boolean');
         expect(typeof component.isProductGroupEmpty()).toBe('boolean');
@@ -627,7 +627,7 @@ describe('NewScenario Component', () => {
       expect(component.respondentGroupHasError()).toBe(false);
 
       // Try to submit invalid form
-      component.onFinish();
+      component.onSubmit();
 
       // All steps should now show errors (all touched + invalid)
       expect(component.productGroupHasError()).toBe(true);

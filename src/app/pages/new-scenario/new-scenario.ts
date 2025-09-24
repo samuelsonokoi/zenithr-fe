@@ -36,12 +36,8 @@ export class NewScenario {
       experienceProduct: new FormControl('', [Validators.required]),
       selectedSurveys: new FormControl([] as string[])
     }),
-    respondents: new FormGroup({
-      total: new FormControl('', [Validators.required])
-    }),
-    criteria: new FormGroup({
-      distributions: new FormArray<FormGroup>([], [duplicateDistributionValueValidator()])
-    }),
+    respondentsTotal: new FormControl('', [Validators.required]),
+    criteriaDistributions: new FormArray<FormGroup>([], [duplicateDistributionValueValidator()]),
     impactDrivers: new FormGroup({
       innovation: new FormControl('', [Validators.required, Validators.min(0), Validators.max(100)]),
       motivation: new FormControl('', [Validators.required, Validators.min(0), Validators.max(100)]),
@@ -56,8 +52,8 @@ export class NewScenario {
       detractors: new FormControl('', [Validators.required, Validators.min(0), Validators.max(100)]),
     }),
     comments: new FormGroup({
-      innovation: new FormControl('', [Validators.required]),
-      motivation: new FormControl('', [Validators.required]),
+      innovation: new FormControl(''),
+      motivation: new FormControl(''),
       performance: new FormControl(''),
       autonomy: new FormControl(''),
       connection: new FormControl(''),
@@ -68,12 +64,12 @@ export class NewScenario {
     return this.scenarioForm.controls.product as FormGroup;
   }
 
-  protected get respondentGroup() {
-    return this.scenarioForm.controls.respondents as FormGroup;
+  get respondentsTotal() {
+    return this.scenarioForm.controls.respondentsTotal as FormControl;
   }
 
-  protected get criteriaGroup() {
-    return this.scenarioForm.controls.criteria as FormGroup;
+  get criteriaDistributions() {
+    return this.scenarioForm.controls.criteriaDistributions as FormArray;
   }
 
   protected get impactDriversGroup() {
@@ -88,10 +84,6 @@ export class NewScenario {
     return this.scenarioForm.controls.comments as FormGroup;
   }
 
-  protected get distributionsArray() {
-    return this.criteriaGroup.get('distributions') as FormArray;
-  }
-
 
   // Track touched state for each form group
   private readonly productGroupTouched = signal(false);
@@ -100,11 +92,6 @@ export class NewScenario {
   private readonly impactDriversGroupTouched = signal(false);
   private readonly enpsSettingsGroupTouched = signal(false);
   private readonly commentsGroupTouched = signal(false);
-
-
-
-
-
 
   // Cache selected groups to avoid filtering on every access
   private readonly selectedCriteriaGroups = computed(() =>
@@ -163,7 +150,7 @@ export class NewScenario {
   }
 
   respondentGroupHasError(): boolean {
-    return this.respondentGroupTouched() && this.respondentGroup.status !== 'VALID';
+    return this.respondentGroupTouched() && (this.respondentsTotal.invalid || false);
   }
 
   criteriaGroupHasError(): boolean {
@@ -197,7 +184,7 @@ export class NewScenario {
 
     // Cache validation states to prevent repeated calculations
     const productValid = this.productGroup.status === 'VALID';
-    const respondentValid = this.respondentGroup.status === 'VALID';
+    const respondentValid = this.respondentsTotal.valid || false;
     const driversValid = this.impactDriversGroup.status === 'VALID';
     const enpsValid = this.enpsSettingsGroup.status === 'VALID';
 
@@ -538,7 +525,7 @@ export class NewScenario {
     }
   }
 
-  onFinish(): void {
+  onSubmit(): void {
     if (this.scenarioForm.valid) {
       const formValue = this.scenarioForm.value;
       console.log('Form submitted with values:', formValue);
@@ -621,7 +608,7 @@ export class NewScenario {
 
   addDistributionItem(criteriaType: CriteriaType, criteriaId: string, criteriaName: string): void {
     // Check if this criteria is already in the FormArray
-    const distributionsArray = this.distributionsArray;
+    const distributionsArray = this.criteriaDistributions;
     const existingControl = distributionsArray.controls.find(control =>
       control.get('value')?.value === criteriaId
     );
@@ -657,7 +644,7 @@ export class NewScenario {
 
     // Remove from FormArray using the FormArray index
     const formArrayIndex = this.getFormArrayIndexForItem(criteriaType, itemIndex);
-    const distributionsArray = this.distributionsArray;
+    const distributionsArray = this.criteriaDistributions;
 
     if (formArrayIndex !== -1 && formArrayIndex < distributionsArray.length) {
       distributionsArray.removeAt(formArrayIndex);
@@ -678,7 +665,7 @@ export class NewScenario {
 
   updateDistributionPercentage(criteriaType: CriteriaType, criteriaId: string, percentage: number): void {
     // Update FormControl value
-    const distributionsArray = this.distributionsArray;
+    const distributionsArray = this.criteriaDistributions;
     const control = distributionsArray.controls.find(control =>
       control.get('value')?.value === criteriaId
     );
@@ -754,7 +741,7 @@ export class NewScenario {
       valueControl?.markAsTouched();
 
       // Force FormArray validation update after value change
-      this.distributionsArray.updateValueAndValidity();
+      this.criteriaDistributions.updateValueAndValidity();
     }
 
     if (selectedOptionId) {
@@ -833,7 +820,7 @@ export class NewScenario {
   }
 
   getDistributionControl(criteriaId: string): FormGroup | undefined {
-    return this.distributionsArray.controls.find(control =>
+    return this.criteriaDistributions.controls.find(control =>
       control.get('value')?.value === criteriaId
     ) as FormGroup;
   }
@@ -856,7 +843,7 @@ export class NewScenario {
 
     if (!item.criteriaId) {
       const formArrayIndex = this.getFormArrayIndexForItem(criteriaType, itemIndex);
-      return this.distributionsArray.at(formArrayIndex) as FormGroup;
+      return this.criteriaDistributions.at(formArrayIndex) as FormGroup;
     }
 
     return this.getDistributionControl(item.criteriaId);
@@ -900,17 +887,17 @@ export class NewScenario {
 
     const criteriaIds = group.items.map(item => item.criteriaId);
 
-    for (let i = this.distributionsArray.length - 1; i >= 0; i--) {
-      const control = this.distributionsArray.at(i);
+    for (let i = this.criteriaDistributions.length - 1; i >= 0; i--) {
+      const control = this.criteriaDistributions.at(i);
       const controlValue = control.get('value')?.value;
 
       if (criteriaIds.includes(controlValue)) {
-        this.distributionsArray.removeAt(i);
+        this.criteriaDistributions.removeAt(i);
       }
     }
 
     // Force FormArray validation update after clearing criteria
-    this.distributionsArray.updateValueAndValidity();
+    this.criteriaDistributions.updateValueAndValidity();
 
     // Trigger change detection for immediate UI updates
     this.cdr.detectChanges();
@@ -930,7 +917,7 @@ export class NewScenario {
 
   resetForm(): void {
     this.scenarioForm.reset();
-    this.distributionsArray.clear();
+    this.criteriaDistributions.clear();
     this.allSurveys.update(surveys =>
       surveys.map(survey => ({ ...survey, selected: false }))
     );
