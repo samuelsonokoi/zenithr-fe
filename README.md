@@ -1,6 +1,6 @@
 # Zenithr - HR Survey Scenario Management System
 
-A sophisticated Angular 20+ application designed for HR administrators to create and manage survey scenarios with complex criteria distribution and validation systems.
+A highly configurable, accessible, and enterprise-ready stepper component built with Angular 20+ and Tailwind CSS. This component provides dynamic content injection, robust validation, and seamless user experience for multi-step workflows.
 
 ## 🚀 Quick Start
 
@@ -89,6 +89,7 @@ You can click [here to view the demo](https://zenithr-fe-demo.web.app) online
 
 - ARIA labels and roles throughout
 - Keyboard navigation support
+- Immersive user experience with responsive design
 - Screen reader optimizations
 - Focus management in complex interactions
 
@@ -158,7 +159,7 @@ src/
 
 **Features:**
 
-- Extended Angular CDK Stepper with advanced state management
+- Extended Angular CDK Stepper with advanced state management for more flexibility
 - Step validation with error states
 - Optional step support
 - Programmatic navigation control
@@ -304,7 +305,7 @@ export function duplicateDistributionValueValidator(): ValidatorFn {
 
 **Testing Strategy:**
 
-- Jest for unit testing (replacing Karma/Jasmine)
+- Jest for unit testing (replacing deprecated Karma/Jasmine)
 - Component testing with Angular Testing Library patterns
 - Custom validators have dedicated test coverage
 - Accessibility testing integration
