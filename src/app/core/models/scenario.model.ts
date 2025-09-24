@@ -19,8 +19,6 @@ export type Option = {
   description?: string;
 }
 
-
-
 /**
  * Pagination configuration for survey lists
  */
