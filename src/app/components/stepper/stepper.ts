@@ -3,6 +3,92 @@ import { CdkStepper, CdkStepperModule} from '@angular/cdk/stepper';
 import { NgTemplateOutlet, CommonModule } from '@angular/common';
 import { StepperConfig, StepConfig } from '../../core/models/stepper.model';
 
+/**
+ * A comprehensive stepper component that extends Angular CDK Stepper with advanced step management,
+ * validation, and state tracking capabilities.
+ *
+ * @example
+ * Basic usage with step content:
+ * ```typescript
+ * @Component({
+ *   template: `
+ *     <app-stepper [stepperConfig]="config"
+ *                  (cancelClicked)="onCancel()"
+ *                  (finishClicked)="onFinish()"
+ *                  (stepChanged)="onStepChanged($event)">
+ *       <cdk-step label="Product">Product content</cdk-step>
+ *       <cdk-step label="Surveys">Surveys content</cdk-step>
+ *       <cdk-step label="Criteria">Criteria content</cdk-step>
+ *     </app-stepper>
+ *   `
+ * })
+ * ```
+ *
+ * @example
+ * Configuration object structure:
+ * ```typescript
+ * const stepperConfig: StepperConfig = {
+ *   title: 'Create New Scenario',
+ *   role: 'Product Manager',
+ *   steps: [
+ *     { id: 'product', title: 'Product', completed: true },
+ *     { id: 'surveys', title: 'Surveys', completed: false, optional: true },
+ *     { id: 'criteria', title: 'Criteria', completed: false, hasError: true }
+ *   ]
+ * };
+ * ```
+ *
+ * @example
+ * Handling step changes and validation:
+ * ```typescript
+ * onStepChanged(event: { fromIndex: number; toIndex: number; stepId: string }) {
+ *   // Validate previous step before allowing navigation
+ *   if (this.isStepValid(event.fromIndex)) {
+ *     this.stepper.markStepAsCompleted(event.fromIndex);
+ *   } else {
+ *     this.stepper.markStepAsError(event.fromIndex);
+ *   }
+ * }
+ * ```
+ *
+ * @example
+ * Programmatic step control:
+ * ```typescript
+ * // Mark step as completed
+ * stepper.markStepAsCompleted(0);
+ *
+ * // Mark step as having error
+ * stepper.markStepAsError(1);
+ *
+ * // Clear step error
+ * stepper.clearStepError(1);
+ *
+ * // Update step from parent component
+ * stepper.updateStepFromParent('product', { completed: true, hasError: false });
+ * ```
+ *
+ * ## Key Features:
+ * - **Navigation Control**: Prevents navigation to invalid steps or through invalid steps
+ * - **State Management**: Tracks completion, error, and optional states for each step
+ * - **Accessibility**: Full keyboard navigation and ARIA support
+ * - **Responsive Design**: Adapts to different screen sizes
+ * - **Event Handling**: Emits events for cancel, finish, and step changes
+ * - **Validation Integration**: Works with form validation systems
+ *
+ * ## Step States:
+ * - `completed`: Step has been successfully completed
+ * - `hasError`: Step has validation errors that block navigation
+ * - `optional`: Step can be skipped without completion
+ * - `editable`: Step can be navigated back to (default: true)
+ *
+ * ## Navigation Rules:
+ * 1. Can always navigate to current step
+ * 2. Can navigate to previous steps if they are editable
+ * 3. Can navigate forward only if all intermediate steps are completed or optional
+ * 4. Cannot navigate if current step has errors (even if optional)
+ * 5. Cannot navigate beyond last step
+ *
+ */
 @Component({
   selector: 'app-stepper',
   standalone: true,
@@ -22,6 +108,7 @@ export class Stepper extends CdkStepper {
 
   constructor() {
     super();
+    // React to configuration changes and initialize step states
     effect(() => {
       const config = this.stepperConfig();
       if (config?.steps) {
@@ -55,6 +142,22 @@ export class Stepper extends CdkStepper {
   }
 
   // Update step state
+  /**
+   * Updates the state of a specific step with the provided configuration changes.
+   * Use this to mark steps as completed, add errors, or change optional status.
+   *
+   * @param stepIndex The zero-based index of the step to update
+   * @param updates Partial step configuration with properties to update
+   *
+   * @example
+   * ```typescript
+   * // Mark step as completed
+   * stepper.updateStepState(0, { completed: true, hasError: false });
+   *
+   * // Add error to step
+   * stepper.updateStepState(1, { hasError: true, completed: false });
+   * ```
+   */
   protected updateStepState(stepIndex: number, updates: Partial<StepConfig>) {
     this.stepStates.update(states => {
       const current = states.get(stepIndex) || {} as StepConfig;
@@ -158,6 +261,13 @@ export class Stepper extends CdkStepper {
     return this.selectedIndex === this.steps.length - 1;
   }
 
+  /**
+   * Determines the CSS classes for a step button based on its current state.
+   * Handles styling for completed, error, current, and disabled states.
+   *
+   * @param stepIndex The zero-based index of the step
+   * @returns A space-separated string of CSS classes
+   */
   protected getStepClasses(stepIndex: number): string {
     const stepConfig = this.getStepConfig(stepIndex);
     const isDisabled = !this.canNavigateToStep(stepIndex);
@@ -209,6 +319,20 @@ export class Stepper extends CdkStepper {
   }
 
   // Method to programmatically update step states from parent
+  /**
+   * Updates a step's state using its string ID rather than numeric index.
+   * Useful for parent components that work with step IDs from the configuration.
+   *
+   * @param stepId The string ID of the step as defined in the stepper configuration
+   * @param updates Partial step configuration with properties to update
+   *
+   * @example
+   * ```typescript
+   * // Update step by ID
+   * stepper.updateStepFromParent('product', { completed: true });
+   * stepper.updateStepFromParent('criteria', { hasError: true });
+   * ```
+   */
   protected updateStepFromParent(stepId: string, updates: Partial<StepConfig>) {
     const stepIndex = this.stepperConfig()?.steps.findIndex(s => s.id === stepId);
     if (stepIndex !== undefined && stepIndex >= 0) {
@@ -216,6 +340,13 @@ export class Stepper extends CdkStepper {
     }
   }
 
+  /**
+   * Generates an accessible ARIA label for a step button.
+   * Includes step title, optional status, completion status, and error state.
+   *
+   * @param stepIndex The zero-based index of the step
+   * @returns A descriptive ARIA label string for accessibility
+   */
   protected getStepAriaLabel(stepIndex: number): string {
     const config = this.getStepConfig(stepIndex);
     const title = config?.title || `Step ${stepIndex + 1}`;
@@ -226,6 +357,13 @@ export class Stepper extends CdkStepper {
     return `${title}${optional}${completed}${hasError}`;
   }
 
+  /**
+   * Emits a stepChanged event with navigation details.
+   *
+   * @param fromIndex The zero-based index of the step being navigated from
+   * @param toIndex The zero-based index of the step being navigated to
+   * @internal
+   */
   private emitStepChange(fromIndex: number, toIndex: number): void {
     const config = this.stepperConfig();
     const stepId = config?.steps[toIndex]?.id || `step-${toIndex}`;
