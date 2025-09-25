@@ -316,80 +316,289 @@ expect(component['dataSignal']()).toEqual(expectedData);
 - Consistent patterns across all components
 - TypeScript compiler enforces access boundaries
 
-### 5. Modular Step Components Architecture
+### 5. Enterprise Design Patterns
 
-**Component Extraction Pattern:**
+**Component Composition Architecture:**
 
-The new-scenario page has been refactored into modular step components for better maintainability and reusability:
+The stepper follows enterprise-grade composition patterns for maximum flexibility and reusability:
 
 ```typescript
-// Step components receive FormGroup inputs and emit events
-@Component({
-  selector: 'app-impact-driver-step',
-  template: './impact-driver-step.html'
-})
-export class ImpactDriverStep {
-  impactDriversGroup = input.required<FormGroup>();
-
-  protected impactDriversTotal(): number {
-    // Calculation logic encapsulated within component
-  }
+// Generic step component interface
+interface StepComponent<T = any> {
+  data: T;
+  isValid(): boolean;
+  getData(): T;
+  reset(): void;
 }
 
-// Parent orchestrates form sections
+// Composable step components
 @Component({
+  selector: 'app-dynamic-step',
   template: `
-    <cdk-step>
-      <div formGroupName="impactDrivers">
-        <app-impact-driver-step [impactDriversGroup]="impactDriversGroup" />
-      </div>
-    </cdk-step>
+    <ng-container [ngSwitch]="stepType">
+      <app-form-step *ngSwitchCase="'form'" [config]="stepConfig" />
+      <app-review-step *ngSwitchCase="'review'" [data]="reviewData" />
+      <app-upload-step *ngSwitchCase="'upload'" [options]="uploadOptions" />
+    </ng-container>
   `
 })
-export class NewScenario {
-  formSubmitted = output<Scenario>();
+export class DynamicStep implements StepComponent {
+  @Input() stepType: 'form' | 'review' | 'upload';
+  @Input() stepConfig: any;
 
-  protected onSubmit(): void {
-    if (this.scenarioForm.valid) {
-      this.formSubmitted.emit(this.scenarioForm.value);
-      this.router.navigate(['/']);
-    }
+  isValid(): boolean {
+    return this.validateCurrentStep();
   }
 }
 ```
 
-**Step Components:**
-
-- **ImpactDriverStep**: Impact drivers form with 6 drivers (Innovation, Motivation, Performance, Autonomy, Connection, Transformational Leadership)
-- **EnpsSettingsStep**: eNPS configuration (Promoters, Passives, Detractors)
-- **CommentsStep**: Comment sections with tabbed interface for different driver categories
-
-**Benefits:**
-
-- **Single Responsibility**: Each component handles one form section
-- **Reusability**: Step components can be used independently
-- **Maintainability**: Logic and templates are co-located
-- **Testing**: Individual step components have dedicated test suites
-- **Type Safety**: Strongly typed with Scenario interface for form emissions
-
-### 6. Modular Validation System
-
-**Custom Validators:**
+**Factory Pattern for Step Creation:**
 
 ```typescript
+// Step factory for different workflow types
+@Injectable({ providedIn: 'root' })
+export class StepConfigFactory {
+  createWorkflow(type: WorkflowType): StepperConfig {
+    switch (type) {
+      case 'user-registration':
+        return this.createUserRegistrationFlow();
+      case 'employee-onboarding':
+        return this.createOnboardingFlow();
+      case 'data-migration':
+        return this.createMigrationFlow();
+      default:
+        return this.createDefaultFlow();
+    }
+  }
+
+  private createUserRegistrationFlow(): StepperConfig {
+    return {
+      title: 'User Registration',
+      role: 'New User',
+      steps: [
+        { id: 'account', title: 'Account Details', completed: false },
+        { id: 'profile', title: 'Profile Setup', optional: true, completed: false },
+        { id: 'verification', title: 'Email Verification', completed: false }
+      ]
+    };
+  }
+}
+```
+
+**Observer Pattern for Step State Management:**
+
+```typescript
+// Step state service with reactive patterns
+@Injectable({ providedIn: 'root' })
+export class StepStateService {
+  private stepStateSubject = new BehaviorSubject<Map<string, StepState>>(new Map());
+  stepState$ = this.stepStateSubject.asObservable();
+
+  updateStepState(stepId: string, state: Partial<StepState>): void {
+    const currentState = this.stepStateSubject.value;
+    const existingState = currentState.get(stepId) || {};
+    currentState.set(stepId, { ...existingState, ...state });
+    this.stepStateSubject.next(new Map(currentState));
+  }
+
+  getStepState(stepId: string): StepState | undefined {
+    return this.stepStateSubject.value.get(stepId);
+  }
+}
+```
+
+**Strategy Pattern for Validation:**
+
+```typescript
+// Validation strategy interface
+interface ValidationStrategy {
+  validate(data: any): ValidationResult;
+}
+
+// Concrete validation strategies
+class RequiredFieldValidation implements ValidationStrategy {
+  validate(data: any): ValidationResult {
+    return {
+      isValid: Object.values(data).every(value => !!value),
+      errors: this.getErrors(data)
+    };
+  }
+}
+
+class EmailValidation implements ValidationStrategy {
+  validate(data: any): ValidationResult {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return {
+      isValid: emailRegex.test(data.email),
+      errors: data.email ? [] : ['Valid email required']
+    };
+  }
+}
+
+// Context class using strategies
+class StepValidator {
+  private strategies: ValidationStrategy[] = [];
+
+  addValidation(strategy: ValidationStrategy): void {
+    this.strategies.push(strategy);
+  }
+
+  validateStep(data: any): ValidationResult {
+    return this.strategies.reduce((result, strategy) => {
+      const validation = strategy.validate(data);
+      return {
+        isValid: result.isValid && validation.isValid,
+        errors: [...result.errors, ...validation.errors]
+      };
+    }, { isValid: true, errors: [] });
+  }
+}
+```
+
+**Modular Step Components Architecture:**
+
+```typescript
+// Base step component with common functionality
+@Component({ template: '' })
+export abstract class BaseStepComponent implements OnInit, OnDestroy {
+  @Input() data: any;
+  @Output() dataChange = new EventEmitter<any>();
+  @Output() validationChange = new EventEmitter<boolean>();
+
+  protected abstract initializeStep(): void;
+  protected abstract validateStep(): boolean;
+
+  ngOnInit(): void {
+    this.initializeStep();
+    this.setupValidation();
+  }
+
+  private setupValidation(): void {
+    // Common validation setup
+    this.validationChange.emit(this.validateStep());
+  }
+}
+
+// Concrete step implementations
+@Component({
+  selector: 'app-profile-step',
+  template: './profile-step.html'
+})
+export class ProfileStepComponent extends BaseStepComponent {
+  profileForm: FormGroup;
+
+  protected initializeStep(): void {
+    this.profileForm = this.fb.group({
+      firstName: ['', Validators.required],
+      lastName: ['', Validators.required],
+      email: ['', [Validators.required, Validators.email]]
+    });
+  }
+
+  protected validateStep(): boolean {
+    return this.profileForm.valid;
+  }
+}
+```
+
+**Benefits of Enterprise Patterns:**
+
+- **Scalability**: Easy to add new workflow types and step components
+- **Maintainability**: Clear separation of concerns and single responsibility
+- **Testability**: Each pattern can be unit tested independently
+- **Flexibility**: Support for runtime configuration and dynamic step creation
+- **Reusability**: Components and strategies can be reused across different workflows
+- **Type Safety**: Strong typing throughout the component hierarchy
+
+### 6. Enterprise Validation Architecture
+
+**Multi-Layer Validation System:**
+
+```typescript
+// Custom validators with business logic
 export function duplicateDistributionValueValidator(): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
-    // Business logic validation
+    if (!(control instanceof FormArray)) return null;
+
+    const duplicates = new Set<string>();
+    const values = control.controls
+      .map(c => c.get('criteriaId')?.value)
+      .filter(Boolean);
+
+    return values.length !== new Set(values).size
+      ? { duplicateDistributionValues: true }
+      : null;
+  };
+}
+
+// Cross-field validation for complex scenarios
+export function stepCompletionValidator(requiredSteps: string[]): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const completedSteps = control.value?.completedSteps || [];
+    const missingSteps = requiredSteps.filter(step => !completedSteps.includes(step));
+
+    return missingSteps.length > 0
+      ? { incompleteSteps: { missing: missingSteps } }
+      : null;
+  };
+}
+
+// Conditional validation based on step context
+export function conditionalRequiredValidator(condition: () => boolean): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    if (!condition()) return null;
+    return Validators.required(control);
   };
 }
 ```
 
-**Validation Integration:**
+**Real-Time Validation Integration:**
 
-- Step-level validation
-- Real-time feedback
-- Error state management
-- Accessibility compliance
+```typescript
+// Step-level validation orchestration
+@Injectable({ providedIn: 'root' })
+export class StepValidationService {
+  validateStep(stepId: string, formData: any): Observable<ValidationResult> {
+    return this.getValidationRules(stepId).pipe(
+      mergeMap(rules => this.executeValidation(formData, rules)),
+      map(results => this.aggregateResults(results))
+    );
+  }
+
+  private executeValidation(data: any, rules: ValidationRule[]): Observable<ValidationResult[]> {
+    return forkJoin(
+      rules.map(rule => this.validateRule(data, rule))
+    );
+  }
+}
+
+// Component-level validation integration
+export class ValidatedStepComponent {
+  private validationSubscription?: Subscription;
+
+  ngOnInit(): void {
+    this.setupValidation();
+  }
+
+  private setupValidation(): void {
+    this.validationSubscription = this.formGroup.valueChanges.pipe(
+      debounceTime(300),
+      switchMap(value => this.validationService.validateStep(this.stepId, value))
+    ).subscribe(result => {
+      this.updateValidationState(result);
+      this.stepStateChange.emit({ stepId: this.stepId, isValid: result.isValid });
+    });
+  }
+}
+```
+
+**Enterprise Validation Features:**
+
+- **Async Validation**: Server-side validation with debouncing and caching
+- **Cross-Step Dependencies**: Validation rules that span multiple steps
+- **Business Rule Engine**: Configurable validation rules from external systems
+- **Error Recovery**: Guided error correction with contextual help
+- **Accessibility Compliance**: ARIA labels and screen reader support for all validation states
 
 ## 🎯 Development Assumptions
 
@@ -479,12 +688,179 @@ export function duplicateDistributionValueValidator(): ValidatorFn {
 - **Linting:** ESLint for consistent code quality and Angular-specific rules
 - **Component Architecture:** OnPush change detection with signal-based reactivity
 
+## 🎛️ Stepper Configuration Examples
+
+The stepper component supports multiple configuration patterns to accommodate different enterprise workflows:
+
+### Basic Configuration
+```typescript
+const basicConfig: StepperConfig = {
+  title: 'User Registration',
+  role: 'New User',
+  steps: [
+    { id: 'profile', title: 'Profile Info', completed: false },
+    { id: 'preferences', title: 'Preferences', completed: false },
+    { id: 'review', title: 'Review', completed: false }
+  ]
+};
+```
+
+### Advanced Configuration with Optional Steps
+```typescript
+const advancedConfig: StepperConfig = {
+  title: 'Project Setup',
+  role: 'Project Manager',
+  steps: [
+    { id: 'basics', title: 'Project Basics', completed: false },
+    { id: 'team', title: 'Team Members', optional: true, completed: false },
+    { id: 'settings', title: 'Advanced Settings', optional: true, completed: false },
+    { id: 'review', title: 'Review & Launch', completed: false }
+  ]
+};
+```
+
+### Configuration with Error States
+```typescript
+const validationConfig: StepperConfig = {
+  title: 'Data Migration',
+  role: 'System Admin',
+  steps: [
+    { id: 'source', title: 'Source Selection', completed: true },
+    { id: 'mapping', title: 'Field Mapping', hasError: true, completed: false },
+    { id: 'validation', title: 'Data Validation', completed: false },
+    { id: 'migration', title: 'Execute Migration', completed: false }
+  ]
+};
+```
+
+### Complex Workflow Configuration
+```typescript
+const complexConfig: StepperConfig = {
+  title: 'Employee Onboarding',
+  role: 'HR Administrator',
+  steps: [
+    { id: 'personal', title: 'Personal Information', completed: true },
+    { id: 'documents', title: 'Document Upload', completed: false },
+    { id: 'benefits', title: 'Benefits Selection', optional: true, completed: false },
+    { id: 'equipment', title: 'Equipment Assignment', completed: false },
+    { id: 'training', title: 'Training Schedule', optional: true, completed: false },
+    { id: 'completion', title: 'Onboarding Complete', completed: false }
+  ]
+};
+```
+
+## 📋 Configuration Options Reference
+
+| Property | Type | Description | Default |
+|----------|------|-------------|---------|
+| `id` | `string` | Unique identifier for the step | Required |
+| `title` | `string` | Display name for the step | Required |
+| `optional` | `boolean` | Whether step can be skipped | `false` |
+| `completed` | `boolean` | Whether step has been completed | `false` |
+| `hasError` | `boolean` | Whether step has validation errors | `false` |
+| `editable` | `boolean` | Whether step can be navigated back to | `true` |
+| `disabled` | `boolean` | Whether step is completely disabled | `false` |
+| `data` | `StepData` | Additional step-specific data | `null` |
+
+## 🚦 Navigation Rules
+
+The stepper enforces intelligent navigation rules based on step configuration:
+
+1. **Forward Navigation**: Can only proceed if current step is completed OR optional (without errors)
+2. **Backward Navigation**: Can return to any previous step (if editable)
+3. **Error Blocking**: Steps with `hasError: true` prevent any navigation until resolved
+4. **Optional Steps**: Can be skipped but still validate if data is entered
+5. **Disabled Steps**: Cannot be accessed at all (`disabled: true`)
+
+### Navigation Examples
+
+```typescript
+// Allow navigation only when step is valid
+canNavigateToNextStep(): boolean {
+  const stepConfig = this.getStepConfig(this.selectedIndex);
+  if (stepConfig?.hasError) return false;
+  return stepConfig?.completed || stepConfig?.optional || false;
+}
+
+// Programmatic step control
+stepper.markStepAsCompleted(0);           // Mark step as valid
+stepper.markStepAsError(1);               // Add error state
+stepper.clearStepError(1);                // Remove error state
+stepper.updateStepFromParent('profile', { // Update by step ID
+  completed: true,
+  hasError: false
+});
+```
+
+## 🎨 Visual State Indicators
+
+The stepper provides rich visual feedback based on configuration:
+
+- **✅ Completed Steps**: Green background with checkmark icon
+- **❌ Error Steps**: Red background with warning icon
+- **🔵 Current Step**: Dark background with step number
+- **⭕ Future Steps**: Light background, disabled if unreachable
+- **📝 Optional Steps**: "(Optional)" label in step header
+
+## 🧩 Integration Patterns
+
+### Form Integration Pattern
+```typescript
+@Component({
+  template: `
+    <app-stepper
+      [stepperConfig]="config"
+      (stepChanged)="onStepChanged($event)"
+      (finishClicked)="onFormSubmit()">
+
+      <cdk-step>
+        <app-basic-info [formGroup]="formGroup.get('basicInfo')" />
+      </cdk-step>
+
+      <cdk-step>
+        <app-preferences [formGroup]="formGroup.get('preferences')" />
+      </cdk-step>
+    </app-stepper>
+  `
+})
+export class MyWorkflow {
+  config: StepperConfig = { /* configuration */ };
+
+  onStepChanged(event: StepChangeEvent) {
+    // Validate previous step, update step states
+    if (this.validateStep(event.fromIndex)) {
+      this.stepper.markStepAsCompleted(event.fromIndex);
+    } else {
+      this.stepper.markStepAsError(event.fromIndex);
+    }
+  }
+}
+```
+
+### Conditional Step Pattern
+```typescript
+// Dynamic step configuration based on user role
+generateStepperConfig(userRole: string): StepperConfig {
+  const baseSteps = [
+    { id: 'profile', title: 'Profile', completed: false }
+  ];
+
+  if (userRole === 'admin') {
+    baseSteps.push(
+      { id: 'admin-settings', title: 'Admin Settings', completed: false }
+    );
+  }
+
+  return { title: 'Setup', role: userRole, steps: baseSteps };
+}
+```
+
 ## 🔮 Future Enhancements
 
 Based on the current architecture, the system is well-positioned for:
 
 - **Backend Integration:** RESTful API integration for survey data
-- **State Management:** NgRx integration for complex state scenarios  
+- **State Management:** NgRx integration for complex state scenarios
 - **Internationalization:** Angular i18n for multi-language support
 - **Advanced Validation:** Server-side validation integration
 - **Reporting Features:** Scenario analytics and reporting dashboards

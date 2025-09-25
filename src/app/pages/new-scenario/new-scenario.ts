@@ -82,14 +82,12 @@ export class NewScenario {
     return this.scenarioForm.controls.comments as FormGroup;
   }
 
-
   private readonly productGroupTouched = signal(false);
   private readonly respondentGroupTouched = signal(false);
   private readonly criteriaGroupTouched = signal(false);
   private readonly impactDriversGroupTouched = signal(false);
   private readonly enpsSettingsGroupTouched = signal(false);
   private readonly commentsGroupTouched = signal(false);
-
 
   protected criteriaGroupStatus(): string {
     return this.criteriaDistributionComponent?.criteriaGroupStatus() || 'VALID';
@@ -188,10 +186,6 @@ export class NewScenario {
     };
   };
 
-
-
-
-
   private readonly completedSteps = signal<Set<string>>(new Set());
 
   protected criteriaValidation(): boolean {
@@ -207,7 +201,6 @@ export class NewScenario {
       return new Set(steps);
     });
   }
-
 
   private markStepAsTouched(stepId: string): void {
     switch (stepId) {
@@ -279,9 +272,6 @@ export class NewScenario {
     return true;
   }
 
-
-
-
   private isProductGroupEmpty(): boolean {
     const productValues = this.productGroup.value;
 
@@ -307,10 +297,9 @@ export class NewScenario {
   protected onSubmit(): void {
     if (this.scenarioForm.valid) {
       const formValue = this.scenarioForm.value;
-      console.log('Form submitted with values:', formValue);
       this.formSubmitted.emit(formValue);
-      this.scenarioForm.reset();
       this.router.navigate(['/']);
+      this.scenarioForm.reset();
     } else {
       console.log('Form is invalid. Please check all required fields.');
       this.markFormGroupTouched(this.scenarioForm);

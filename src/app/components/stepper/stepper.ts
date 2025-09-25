@@ -7,86 +7,19 @@ import { StepperConfig, StepConfig } from '../../core/models/stepper.model';
  * A comprehensive stepper component that extends Angular CDK Stepper with advanced step management,
  * validation, and state tracking capabilities.
  *
- * @example
- * Basic usage with step content:
- * ```typescript
- * @Component({
- *   template: `
- *     <app-stepper [stepperConfig]="config"
- *                  (cancelClicked)="onCancel()"
- *                  (finishClicked)="onFinish()"
- *                  (stepChanged)="onStepChanged($event)">
- *       <cdk-step label="Product">Product content</cdk-step>
- *       <cdk-step label="Surveys">Surveys content</cdk-step>
- *       <cdk-step label="Criteria">Criteria content</cdk-step>
- *     </app-stepper>
- *   `
- * })
- * ```
+ * For detailed usage examples, configuration options, and API documentation,
+ * see the component README: `src/app/components/stepper/README.md`
  *
  * @example
- * Configuration object structure:
+ * Basic usage:
  * ```typescript
- * const stepperConfig: StepperConfig = {
- *   title: 'Create New Scenario',
- *   role: 'Product Manager',
- *   steps: [
- *     { id: 'product', title: 'Product', completed: true },
- *     { id: 'surveys', title: 'Surveys', completed: false, optional: true },
- *     { id: 'criteria', title: 'Criteria', completed: false, hasError: true }
- *   ]
- * };
+ * <app-stepper [stepperConfig]="config"
+ *              (stepChanged)="onStepChanged($event)"
+ *              (finishClicked)="onSubmit()">
+ *   <cdk-step>Step 1 content</cdk-step>
+ *   <cdk-step>Step 2 content</cdk-step>
+ * </app-stepper>
  * ```
- *
- * @example
- * Handling step changes and validation:
- * ```typescript
- * onStepChanged(event: { fromIndex: number; toIndex: number; stepId: string }) {
- *   // Validate previous step before allowing navigation
- *   if (this.isStepValid(event.fromIndex)) {
- *     this.stepper.markStepAsCompleted(event.fromIndex);
- *   } else {
- *     this.stepper.markStepAsError(event.fromIndex);
- *   }
- * }
- * ```
- *
- * @example
- * Programmatic step control:
- * ```typescript
- * // Mark step as completed
- * stepper.markStepAsCompleted(0);
- *
- * // Mark step as having error
- * stepper.markStepAsError(1);
- *
- * // Clear step error
- * stepper.clearStepError(1);
- *
- * // Update step from parent component
- * stepper.updateStepFromParent('product', { completed: true, hasError: false });
- * ```
- *
- * ## Key Features:
- * - **Navigation Control**: Prevents navigation to invalid steps or through invalid steps
- * - **State Management**: Tracks completion, error, and optional states for each step
- * - **Accessibility**: Full keyboard navigation and ARIA support
- * - **Responsive Design**: Adapts to different screen sizes
- * - **Event Handling**: Emits events for cancel, finish, and step changes
- * - **Validation Integration**: Works with form validation systems
- *
- * ## Step States:
- * - `completed`: Step has been successfully completed
- * - `hasError`: Step has validation errors that block navigation
- * - `optional`: Step can be skipped without completion
- * - `editable`: Step can be navigated back to (default: true)
- *
- * ## Navigation Rules:
- * 1. Can always navigate to current step
- * 2. Can navigate to previous steps if they are editable
- * 3. Can navigate forward only if all intermediate steps are completed or optional
- * 4. Cannot navigate if current step has errors (even if optional)
- * 5. Cannot navigate beyond last step
  *
  */
 @Component({
