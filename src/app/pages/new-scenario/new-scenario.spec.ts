@@ -148,10 +148,13 @@ describe('NewScenario Component', () => {
       const navigateSpy = jest.spyOn(mockRouter, 'navigate');
       const formSubmittedSpy = jest.spyOn(component.formSubmitted, 'emit');
 
+      // Capture the form values before submission (since form gets reset after)
+      const expectedFormValue = component.scenarioForm.value;
+
       component['onSubmit']();
 
       expect(navigateSpy).toHaveBeenCalledWith(['/']);
-      expect(formSubmittedSpy).toHaveBeenCalledWith(component.scenarioForm.value);
+      expect(formSubmittedSpy).toHaveBeenCalledWith(expectedFormValue);
     });
 
     it('should not submit invalid form', () => {
