@@ -105,13 +105,6 @@ describe('NewScenario Component', () => {
     });
   });
 
-  describe('Survey Management', () => {
-    it('should handle survey operations', () => {
-      expect(Array.isArray(component.currentPageSurveys())).toBe(true);
-      expect(() => component['toggleSurvey']('test-id')).not.toThrow();
-      expect(Array.isArray(component.paginationPages())).toBe(true);
-    });
-  });
 
   describe('Criteria Management', () => {
     it('should handle criteria operations', () => {
@@ -211,7 +204,7 @@ describe('NewScenario Component', () => {
 
       component['onSubmit']();
 
-      expect(navigateSpy).toHaveBeenCalledWith(['/dashboard']);
+      expect(navigateSpy).toHaveBeenCalledWith(['/']);
     });
 
     it('should not submit invalid form', () => {
@@ -232,7 +225,7 @@ describe('NewScenario Component', () => {
 
       component['onCancel']();
 
-      expect(navigateSpy).toHaveBeenCalledWith(['/dashboard']);
+      expect(navigateSpy).toHaveBeenCalledWith(['/']);
     });
 
     it('should show confirmation when cancelling form with data', () => {
@@ -243,7 +236,7 @@ describe('NewScenario Component', () => {
       component['onCancel']();
 
       expect(confirmSpy).toHaveBeenCalled();
-      expect(navigateSpy).toHaveBeenCalledWith(['/dashboard']);
+      expect(navigateSpy).toHaveBeenCalledWith(['/']);
     });
 
     it('should not navigate when user cancels confirmation', () => {
@@ -470,38 +463,6 @@ describe('NewScenario Component', () => {
     });
   });
 
-  describe('Survey Pagination & Advanced Selection', () => {
-    describe('goToPage', () => {
-      it('should navigate to valid page', () => {
-        component['goToPage'](2);
-        expect(component['pagination']().currentPage).toBe(2);
-      });
-
-      it('should not navigate to invalid page numbers', () => {
-        const initialPage = component['pagination']().currentPage;
-
-        component['goToPage'](0);
-        expect(component['pagination']().currentPage).toBe(initialPage);
-
-        component['goToPage'](10);
-        expect(component['pagination']().currentPage).toBe(initialPage);
-
-        component['goToPage'](-1);
-        expect(component['pagination']().currentPage).toBe(initialPage);
-      });
-
-      it('should update current page surveys after navigation', () => {
-        const page1Surveys = component.currentPageSurveys();
-        component['goToPage'](2);
-        const page2Surveys = component.currentPageSurveys();
-
-        expect(page1Surveys).not.toEqual(page2Surveys);
-        expect(page2Surveys.length).toBeGreaterThan(0);
-      });
-    });
-
-
-  });
 
   describe('Form Control Access Methods', () => {
     beforeEach(() => {
@@ -558,7 +519,6 @@ describe('NewScenario Component', () => {
     describe('resetForm', () => {
       it('should reset all form values, state, and FormArrays', () => {
         component.scenarioForm.get('product.title')!.setValue('Test Title');
-        component['toggleSurvey'](component.currentPageSurveys()[0].id);
         component['toggleCriterion'](CriteriaType.GENDER);
         component['addDistributionItem'](CriteriaType.GENDER, 'male');
         component['addDistributionItem'](CriteriaType.GENDER, 'female');
@@ -568,7 +528,6 @@ describe('NewScenario Component', () => {
         component['resetForm']();
 
         expect(component.scenarioForm.get('product.title')!.value).toBeNull();
-        expect(component.currentPageSurveys().every(s => !s.selected)).toBe(true);
         expect(component['criteriaGroups']()).toEqual([]);
         expect(component.criteriaDistributions.length).toBe(0);
 
@@ -585,7 +544,7 @@ describe('NewScenario Component', () => {
         expect(component['isProductGroupEmpty']()).toBe(false);
 
         component['resetForm']();
-        component['toggleSurvey'](component.currentPageSurveys()[0].id);
+        component.scenarioForm.get('product.selectedSurveys')!.setValue(['survey-1']);
         expect(component['isProductGroupEmpty']()).toBe(false);
 
         component['resetForm']();

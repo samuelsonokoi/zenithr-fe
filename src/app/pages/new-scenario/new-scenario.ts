@@ -1,26 +1,24 @@
 import { Component, ChangeDetectionStrategy, ChangeDetectorRef, signal, computed, inject } from '@angular/core';
 import { CdkStepperModule } from '@angular/cdk/stepper';
 import { ReactiveFormsModule, FormControl, FormGroup, FormArray, Validators } from '@angular/forms';
-import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { Stepper } from '../../components/stepper/stepper';
 import { StepperConfig } from '../../core/models/stepper.model';
 import {
-  Survey,
-  Option,
-  SurveyPagination,
   CriteriaType,
   CriteriaOption,
   CriteriaGroup,
   CommentGroup,
 } from '../../core/models/scenario.model';
-import { allSurveyData, availableCriteria, companyOptions, criteriaOptions, experienceProductOptions, tenantOptions } from '../../core/data/scenario-options';
+import { availableCriteria, criteriaOptions } from '../../core/data/scenario-options';
 import { duplicateDistributionValueValidator } from '../../core/validators/custom.validators';
+import { JsonPipe } from '@angular/common';
+import { ProductStep } from '../../components/product-step/product-step';
 
 @Component({
   selector: 'app-new-scenario',
   standalone: true,
-  imports: [Stepper, CdkStepperModule, ReactiveFormsModule, CommonModule],
+  imports: [Stepper, CdkStepperModule, ReactiveFormsModule, ProductStep, JsonPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './new-scenario.html',
 })
@@ -224,56 +222,16 @@ export class NewScenario {
     };
   };
 
-  readonly tenantOptions: Option[] = tenantOptions;
-
-  readonly companyOptions: Option[] = companyOptions;
-
-  readonly experienceProductOptions: Option[] = experienceProductOptions;
 
   readonly availableCriteria: { type: CriteriaType; name: string }[] = availableCriteria;
 
   readonly criteriaOptions: Record<CriteriaType, CriteriaOption[]> = criteriaOptions;
 
-  private readonly allSurveys = signal<Survey[]>(allSurveyData);
-
-  protected readonly pagination = signal<SurveyPagination>({
-    currentPage: 1,
-    totalPages: 3,
-    totalSurveys: 25,
-    surveysPerPage: 10
-  });
 
   private readonly criteriaGroups = signal<CriteriaGroup[]>([]);
 
   private readonly completedSteps = signal<Set<string>>(new Set());
 
-  readonly currentPageSurveys = computed(() => {
-    const paginationData = this.pagination();
-    const surveys = this.allSurveys();
-    const startIndex = (paginationData.currentPage - 1) * paginationData.surveysPerPage;
-    const endIndex = startIndex + paginationData.surveysPerPage;
-    return surveys.slice(startIndex, endIndex);
-  });
-
-
-  readonly paginationPages = computed(() => {
-    const paginationData = this.pagination();
-    const pages: number[] = [];
-    for (let i = 1; i <= paginationData.totalPages; i++) {
-      pages.push(i);
-    }
-    return pages;
-  });
-
-  readonly currentPageEndIndex = computed(() => {
-    const paginationData = this.pagination();
-    return Math.min(paginationData.currentPage * paginationData.surveysPerPage, paginationData.totalSurveys);
-  });
-
-  readonly currentPageStartIndex = computed(() => {
-    const paginationData = this.pagination();
-    return (paginationData.currentPage - 1) * paginationData.surveysPerPage + 1;
-  });
 
   readonly selectedCriteriaTypes = computed(() => {
     const groups = this.criteriaGroups();
@@ -421,74 +379,25 @@ export class NewScenario {
     this.currentCommentSection.set(section);
   }
 
-  protected toggleSurvey(surveyId: string): void {
-    this.allSurveys.update(surveys =>
-      surveys.map(survey =>
-        survey.id === surveyId
-          ? { ...survey, selected: !survey.selected }
-          : survey
-      )
-    );
-
-    this.updateSelectedSurveys();
-  }
-
-  protected areAllCurrentPageSurveysSelected(): boolean {
-    const currentSurveys = this.currentPageSurveys();
-    return currentSurveys.length > 0 && currentSurveys.every(survey => survey.selected);
-  }
-
-  protected areSomeCurrentPageSurveysSelected(): boolean {
-    const currentSurveys = this.currentPageSurveys();
-    const selectedCount = currentSurveys.filter(survey => survey.selected).length;
-    return selectedCount > 0 && selectedCount < currentSurveys.length;
-  }
-
-  protected toggleAllCurrentPageSurveys(): void {
-    const currentSurveys = this.currentPageSurveys();
-    const shouldSelectAll = !this.areAllCurrentPageSurveysSelected();
-
-    this.allSurveys.update(surveys =>
-      surveys.map(survey => {
-        const isCurrentPageSurvey = currentSurveys.some(cs => cs.id === survey.id);
-        return isCurrentPageSurvey
-          ? { ...survey, selected: shouldSelectAll }
-          : survey;
-      })
-    );
-
-    this.updateSelectedSurveys();
-  }
-
-
-  protected goToPage(page: number): void {
-    const currentPagination = this.pagination();
-    if (page >= 1 && page <= currentPagination.totalPages) {
-      this.pagination.update(pagination => ({
-        ...pagination,
-        currentPage: page
-      }));
-    }
-  }
 
   private isProductGroupEmpty(): boolean {
     const productValues = this.productGroup.value;
 
     const hasProductData = productValues.title || productValues.tenant ||
                            productValues.company || productValues.experienceProduct ||
-                           this.allSurveys().filter(survey => survey.selected).length > 0;
+                           (productValues.selectedSurveys && productValues.selectedSurveys.length > 0);
 
     return !hasProductData;
   }
 
   protected onCancel(): void {
     if (this.isProductGroupEmpty()) {
-      this.router.navigate(['/dashboard']);
+      this.router.navigate(['/']);
     } else {
       const confirmed = window.confirm('You have unsaved changes. Are you sure you want to cancel? All changes will be lost.');
       if (confirmed) {
         this.resetForm();
-        this.router.navigate(['/dashboard']);
+        this.router.navigate(['/']);
       }
     }
   }
@@ -497,7 +406,7 @@ export class NewScenario {
     if (this.scenarioForm.valid) {
       const formValue = this.scenarioForm.value;
       console.log('Form submitted with values:', formValue);
-      this.router.navigate(['/dashboard']);
+      this.router.navigate(['/']);
     } else {
       console.log('Form is invalid. Please check all required fields.');
       this.markFormGroupTouched(this.scenarioForm);
@@ -750,13 +659,6 @@ export class NewScenario {
     return this.criteriaGroups().find(group => group.type === criteriaType);
   }
 
-  private getSelectedSurveyIds(): string[] {
-    return this.allSurveys().filter(survey => survey.selected).map(survey => survey.id);
-  }
-
-  private updateSelectedSurveys(): void {
-    this.productGroup.controls['selectedSurveys'].setValue(this.getSelectedSurveyIds());
-  }
 
   private getDistributionControl(criteriaId: string): FormGroup | undefined {
     return this.criteriaDistributions.controls.find(control =>
@@ -822,9 +724,6 @@ export class NewScenario {
   private resetForm(): void {
     this.scenarioForm.reset();
     this.criteriaDistributions.clear();
-    this.allSurveys.update(surveys =>
-      surveys.map(survey => ({ ...survey, selected: false }))
-    );
     this.criteriaGroups.set([]);
   }
 }
