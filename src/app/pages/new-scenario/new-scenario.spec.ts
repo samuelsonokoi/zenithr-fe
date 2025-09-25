@@ -107,12 +107,19 @@ describe('NewScenario Component', () => {
 
 
   describe('Criteria Management', () => {
-    it('should handle criteria operations', () => {
-      expect(Array.isArray(component.selectedCriteriaTypes())).toBe(true);
-      expect(typeof component['criteriaValidation']()).toBe('boolean');
+    it('should handle criteria validation through component reference', () => {
+      // Mock the ViewChild component reference
+      const mockCriteriaComponent = {
+        criteriaGroupStatus: jest.fn().mockReturnValue('VALID'),
+        criteriaValidation: jest.fn().mockReturnValue(true),
+        selectedCriteriaTypes: jest.fn().mockReturnValue([])
+      };
 
-      const group = component['getCriteriaGroup'](CriteriaType.GENDER);
-      expect(group === undefined || typeof group === 'object').toBe(true);
+      // Set the ViewChild reference
+      component['criteriaDistributionComponent'] = mockCriteriaComponent as any;
+
+      expect(component['criteriaGroupStatus']()).toBe('VALID');
+      expect(component['criteriaValidation']()).toBe(true);
     });
   });
 
@@ -254,281 +261,28 @@ describe('NewScenario Component', () => {
 
 
 
-  describe('Criteria Management System', () => {
-    describe('toggleCriterion', () => {
-      it('should add new criteria group when toggling unselected criterion', () => {
-        component['toggleCriterion'](CriteriaType.GENDER);
-
-        const criteriaGroup = component['getCriteriaGroup'](CriteriaType.GENDER);
-        expect(criteriaGroup).toBeTruthy();
-        expect(criteriaGroup!.selected).toBe(true);
-        expect(criteriaGroup!.type).toBe(CriteriaType.GENDER);
-        expect(criteriaGroup!.items).toEqual([]);
-      });
-
-      it('should toggle selected criterion off and clear items', () => {
-        component['toggleCriterion'](CriteriaType.GENDER);
-        component['addDistributionItem'](CriteriaType.GENDER, 'male');
-
-        component['toggleCriterion'](CriteriaType.GENDER);
-
-        const criteriaGroup = component['getCriteriaGroup'](CriteriaType.GENDER);
-        expect(criteriaGroup!.selected).toBe(false);
-        expect(criteriaGroup!.items).toEqual([]);
-        expect(criteriaGroup!.totalPercentage).toBe(0);
-      });
-
-      it('should handle multiple criteria types independently', () => {
-        component['toggleCriterion'](CriteriaType.GENDER);
-        component['toggleCriterion'](CriteriaType.DEPARTMENT);
-
-        const genderGroup = component['getCriteriaGroup'](CriteriaType.GENDER);
-        const deptGroup = component['getCriteriaGroup'](CriteriaType.DEPARTMENT);
-
-        expect(genderGroup!.selected).toBe(true);
-        expect(deptGroup!.selected).toBe(true);
-        expect(component.selectedCriteriaTypes()).toContain(CriteriaType.GENDER);
-        expect(component.selectedCriteriaTypes()).toContain(CriteriaType.DEPARTMENT);
-      });
-    });
-
-    describe('addDistributionItem', () => {
-      beforeEach(() => {
-        component['toggleCriterion'](CriteriaType.GENDER);
-      });
-
-      it('should add distribution item to criteria group and FormArray', () => {
-        component['addDistributionItem'](CriteriaType.GENDER, 'male');
-
-        expect(component.criteriaDistributions.length).toBe(1);
-
-        // Test the helper method
-        const formControl = component['getDistributionControl']('male');
-        expect(formControl).toBeTruthy();
-        expect(formControl!.value.criteriaType).toBe(CriteriaType.GENDER);
-        expect(formControl!.value.criteriaId).toBe('male');
-        expect(formControl!.value.percentage).toBeNull();
-      });
-
-      it('should not add duplicate items', () => {
-        component['addDistributionItem'](CriteriaType.GENDER, 'male');
-        component['addDistributionItem'](CriteriaType.GENDER, 'male');
-
-        expect(component.criteriaDistributions.length).toBe(1);
-      });
-
-      it('should add multiple different items', () => {
-        component['addDistributionItem'](CriteriaType.GENDER, 'male');
-        component['addDistributionItem'](CriteriaType.GENDER, 'female');
-
-        expect(component.criteriaDistributions.length).toBe(2);
-        expect(component['getDistributionItemsByType'](CriteriaType.GENDER).length).toBe(2);
-      });
-    });
-
-    describe('removeDistributionItem', () => {
-      beforeEach(() => {
-        component['toggleCriterion'](CriteriaType.GENDER);
-        component['addDistributionItem'](CriteriaType.GENDER, 'male');
-        component['addDistributionItem'](CriteriaType.GENDER, 'female');
-      });
-
-      it('should remove item from criteria group and FormArray', () => {
-        component['removeDistributionItem'](CriteriaType.GENDER, 0); // Remove first item (male)
-
-        expect(component.criteriaDistributions.length).toBe(1);
-        expect(component['getDistributionItemsByType'](CriteriaType.GENDER).length).toBe(1);
-
-        const remainingItem = component['getDistributionItemsByType'](CriteriaType.GENDER)[0];
-        expect(remainingItem.get('criteriaId')!.value).toBe('female');
-      });
-
-      it('should handle removing non-existent item gracefully', () => {
-        component['removeDistributionItem'](CriteriaType.GENDER, 999); // Invalid index
-
-        expect(component.criteriaDistributions.length).toBe(2);
-        expect(component['getDistributionItemsByType'](CriteriaType.GENDER).length).toBe(2);
-      });
-    });
-
-    describe('updateDistributionPercentage', () => {
-      beforeEach(() => {
-        component['toggleCriterion'](CriteriaType.GENDER);
-        component['addDistributionItem'](CriteriaType.GENDER, 'male');
-        component['addDistributionItem'](CriteriaType.GENDER, 'female');
-      });
-
-      it('should update percentage in FormControl', () => {
-        component['updateDistributionPercentage'](CriteriaType.GENDER, 'male', 60);
-
-        const formControl = component['getDistributionPercentageControl']('male');
-        expect(formControl!.value).toBe(60);
-        expect(formControl!.touched).toBe(true);
-      });
-
-      it('should recalculate total percentage after update', () => {
-        component['updateDistributionPercentage'](CriteriaType.GENDER, 'male', 60);
-        component['updateDistributionPercentage'](CriteriaType.GENDER, 'female', 40);
-
-        const totalPercentage = component['getTotalPercentageForType'](CriteriaType.GENDER);
-        expect(totalPercentage).toBe(50); // Average of 60 and 40
-      });
-    });
-
-    describe('updateDistributionPercentageFromEvent', () => {
-      beforeEach(() => {
-        component['toggleCriterion'](CriteriaType.GENDER);
-        component['addDistributionItem'](CriteriaType.GENDER, 'male');
-      });
-
-      it('should handle input event and update percentage', () => {
-        const event = createMockInputEvent('75');
-
-        component['updateDistributionPercentageFromEvent'](CriteriaType.GENDER, 'male', event);
-
-        const formControl = component['getDistributionPercentageControl']('male');
-        expect(formControl!.value).toBe(75);
-      });
-
-      it('should handle invalid input gracefully', () => {
-        const event = createMockInputEvent('invalid');
-
-        component['updateDistributionPercentageFromEvent'](CriteriaType.GENDER, 'male', event);
-
-        const formControl = component['getDistributionPercentageControl']('male');
-        expect(formControl!.value).toBe(0);
-      });
-    });
-
-    describe('criteriaValidation', () => {
-      it('should return false when no criteria are selected', () => {
-        expect(component['criteriaValidation']()).toBe(false);
-      });
-
-      it('should return false when criteria selected but no items added', () => {
-        component['toggleCriterion'](CriteriaType.GENDER);
-        expect(component['criteriaValidation']()).toBe(false);
-      });
-
-      it('should return false when items added but no percentages set', () => {
-        component['toggleCriterion'](CriteriaType.GENDER);
-        component['addDistributionItem'](CriteriaType.GENDER, 'male');
-        expect(component['criteriaValidation']()).toBe(false);
-      });
-
-      it('should return true when properly configured', () => {
-        component['toggleCriterion'](CriteriaType.GENDER);
-        component['addDistributionItem'](CriteriaType.GENDER, 'male');
-        component['updateDistributionPercentage'](CriteriaType.GENDER, 'male', 60);
-        expect(component['criteriaValidation']()).toBe(true);
-      });
-
-      it('should handle multiple criteria groups correctly', () => {
-        component['toggleCriterion'](CriteriaType.GENDER);
-        component['addDistributionItem'](CriteriaType.GENDER, 'male');
-        component['updateDistributionPercentage'](CriteriaType.GENDER, 'male', 60);
-
-        component['toggleCriterion'](CriteriaType.DEPARTMENT);
-        component['addDistributionItem'](CriteriaType.DEPARTMENT, 'hr');
-
-        expect(component['criteriaValidation']()).toBe(false); // Department not configured
-
-        component['updateDistributionPercentage'](CriteriaType.DEPARTMENT, 'hr', 40);
-
-        // Debug logging
-        const hrControl = component['getDistributionControl']('hr');
-        console.log('HR control:', hrControl?.value);
-        console.log('All controls:', component.criteriaDistributions.value);
-
-        expect(component['criteriaValidation']()).toBe(true);
-      });
-    });
-
-    describe('isCriterionSelected', () => {
-      it('should return false for unselected criterion', () => {
-        expect(component['isCriterionSelected'](CriteriaType.GENDER)).toBe(false);
-      });
-
-      it('should return true for selected criterion', () => {
-        component['toggleCriterion'](CriteriaType.GENDER);
-        expect(component['isCriterionSelected'](CriteriaType.GENDER)).toBe(true);
-      });
-
-      it('should return false after toggling off', () => {
-        component['toggleCriterion'](CriteriaType.GENDER);
-        component['toggleCriterion'](CriteriaType.GENDER);
-        expect(component['isCriterionSelected'](CriteriaType.GENDER)).toBe(false);
-      });
-
-    });
-  });
-
-
-  describe('Form Control Access Methods', () => {
-    beforeEach(() => {
-      component['toggleCriterion'](CriteriaType.GENDER);
-      component['addDistributionItem'](CriteriaType.GENDER, 'male');
-      component['addDistributionItem'](CriteriaType.GENDER, 'female');
-    });
-
-    it('should handle form control access correctly', () => {
-      // Test access by criteria ID
-      const control = component['getDistributionControl']('male');
-      expect(control).toBeTruthy();
-      expect(control!.get('criteriaId')!.value).toBe('male');
-      expect(control!.get('criteriaType')!.value).toBe(CriteriaType.GENDER);
-
-      const valueControl = component['getDistributionValueControl']('male');
-      expect(valueControl).toBeTruthy();
-      expect(valueControl!.value).toBe('male');
-
-      const percentageControl = component['getDistributionPercentageControl']('male');
-      expect(percentageControl).toBeTruthy();
-      expect(percentageControl!.value).toBeNull();
-
-      // Test access by type
-      const itemsByType = component['getDistributionItemsByType'](CriteriaType.GENDER);
-      expect(itemsByType.length).toBe(2);
-      expect(itemsByType[0].get('criteriaId')!.value).toBe('male');
-      expect(itemsByType[1].get('criteriaId')!.value).toBe('female');
-
-      // Test invalid cases
-      expect(component['getDistributionControl']('nonexistent')).toBeUndefined();
-    });
-  });
 
   describe('Form State Management', () => {
     describe('markFormGroupTouched', () => {
       it('should recursively mark all form controls as touched including FormArrays', () => {
-        component['toggleCriterion'](CriteriaType.GENDER);
-        component['addDistributionItem'](CriteriaType.GENDER, 'male');
-
         component['markFormGroupTouched'](component.scenarioForm);
 
         expect(component.scenarioForm.get('product.title')!.touched).toBe(true);
         expect(component.scenarioForm.get('product.tenant')!.touched).toBe(true);
         expect(component.scenarioForm.get('respondentsTotal')!.touched).toBe(true);
         expect(component.scenarioForm.get('impactDrivers.innovation')!.touched).toBe(true);
-
-        const distributionControl = component['getDistributionControl']('male');
-        expect(distributionControl!.get('criteriaId')!.touched).toBe(true);
-        expect(distributionControl!.get('percentage')!.touched).toBe(true);
       });
     });
 
     describe('resetForm', () => {
-      it('should reset all form values, state, and FormArrays', () => {
+      it('should reset all form values and clear FormArrays', () => {
         component.scenarioForm.get('product.title')!.setValue('Test Title');
-        component['toggleCriterion'](CriteriaType.GENDER);
-        component['addDistributionItem'](CriteriaType.GENDER, 'male');
-        component['addDistributionItem'](CriteriaType.GENDER, 'female');
-
-        expect(component.criteriaDistributions.length).toBe(2);
+        component.scenarioForm.get('respondentsTotal')!.setValue('100');
 
         component['resetForm']();
 
         expect(component.scenarioForm.get('product.title')!.value).toBeNull();
-        expect(component['criteriaGroups']()).toEqual([]);
+        expect(component.scenarioForm.get('respondentsTotal')!.value).toBeNull();
         expect(component.criteriaDistributions.length).toBe(0);
 
         expect(typeof (component.productGroup.status === 'VALID')).toBe('boolean');
@@ -617,42 +371,32 @@ describe('NewScenario Component', () => {
       expect(updatedConfig.steps[0].hasError).toBe(false);
     });
 
-    it('should block navigation from criteria step when it has validation errors', () => {
-      // Toggle a criterion and add invalid distribution (this should trigger error immediately)
-      component['toggleCriterion'](component.availableCriteria[0].type);
-      component['addDistributionItem'](component.availableCriteria[0].type, 'item1');
-      component['addDistributionItem'](component.availableCriteria[0].type, 'item1'); // Duplicate - should trigger error
-
-      fixture.detectChanges();
-
+    it('should show criteria step status based on validation state', () => {
       // Get the stepper configuration
       const config = component['stepperConfig']();
       const criteriaStep = config.steps.find(step => step.id === 'criteria');
 
-      // Criteria step should be optional but have error (even without being touched)
+      // Criteria step should be optional
       expect(criteriaStep!.optional).toBe(true);
-      expect(criteriaStep!.hasError).toBe(true);
-      expect(component['criteriaGroupHasError']()).toBe(true);
+      expect(component['criteriaGroupHasError']()).toBe(false);
     });
 
-    it('should show immediate error feedback for criteria validation scenarios', () => {
-      // Initially no error
-      expect(component['criteriaGroupHasError']()).toBe(false);
+    it('should handle criteria error state through component reference', () => {
+      // Mock the ViewChild component reference with error state
+      const mockCriteriaComponent = {
+        criteriaGroupStatus: jest.fn().mockReturnValue('INVALID'),
+        selectedCriteriaTypes: jest.fn().mockReturnValue([{ type: 'GENDER' }])
+      };
 
-      // Toggle a criterion - should show error immediately (selected but no distribution items)
-      component['toggleCriterion'](component.availableCriteria[0].type);
+      // Set the ViewChild reference
+      component['criteriaDistributionComponent'] = mockCriteriaComponent as any;
+
+      // Should show error when validation fails and has active interaction
       expect(component['criteriaGroupHasError']()).toBe(true);
 
-      // Add a distribution item - still error (no percentage set)
-      component['addDistributionItem'](component.availableCriteria[0].type, 'item1');
-      expect(component['criteriaGroupHasError']()).toBe(true);
-
-      // Set percentage - error should clear (valid now)
-      component['updateDistributionPercentage'](component.availableCriteria[0].type, 'item1', 50);
+      // Mock fixing the error
+      mockCriteriaComponent.criteriaGroupStatus.mockReturnValue('VALID');
       expect(component['criteriaGroupHasError']()).toBe(false);
-
-      // This verifies that errors show immediately when criteria are selected/modified
-      // without needing the step to be "touched" first
     });
   });
 
