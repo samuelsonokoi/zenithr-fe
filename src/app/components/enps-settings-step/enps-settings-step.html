@@ -1,0 +1,122 @@
+<fieldset class="rounded-lg lg:max-w-5xl w-full mx-auto lg:py-8 py-16" [formGroup]="enpsSettingsGroup()">
+  <legend class="text-lg font-medium text-[#282D39]">Configure eNPS Settings</legend>
+
+  <div id="enps-settings-heading" class="w-full flex justify-center items-center gap-2 my-8">
+    <img src="images/meter-icon.svg" alt="meter icon for enps settings" />
+    <p class="text-[#282D39] text-[40px] font-medium" aria-live="polite" aria-label="eNPS total percentage">{{ enpsSettingsTotal() }}%</p>
+  </div>
+
+  <div class="mt-8 space-y-2" aria-labelledby="enps-settings-heading">
+    <div class="grid grid-cols-[1fr_20%] bg-[#F1F2F3] gap-2 px-4 py-2">
+      <div class="flex justify-start items-center gap-2">
+        <p class="bg-[#3fb75b] rounded-md px-4 py-1 w-8 h-8"></p>
+        <p class="text-[#5B616C] font-medium text-sm uppercase">Promoters</p>
+      </div>
+      <div class="flex flex-col space-x-1">
+        <div class="flex items-center">
+          <input
+            type="number"
+            min="0"
+            max="100"
+            formControlName="promoters"
+            [class]="enpsSettingsGroup().controls['promoters'].invalid && enpsSettingsGroup().controls['promoters'].touched
+              ? 'w-full px-2 py-2 border border-[#FF4530] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'
+              : 'w-full px-2 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'"
+            [attr.aria-invalid]="enpsSettingsGroup().controls['promoters'].invalid && enpsSettingsGroup().controls['promoters'].touched ? 'true' : 'false'"
+            [attr.aria-describedby]="enpsSettingsGroup().controls['promoters'].invalid && enpsSettingsGroup().controls['promoters'].touched ? 'promoters-error' : null"
+            aria-label="Promoters percentage (0-100)"
+            placeholder="0"
+          />
+          <span class="text-sm text-[#747884]">%</span>
+        </div>
+        @if (enpsSettingsGroup().controls['promoters'].invalid && enpsSettingsGroup().controls['promoters'].touched) {
+        <div id="promoters-error" class="mt-1 text-xs text-red-600" role="alert" aria-live="polite">
+          @if (enpsSettingsGroup().controls['promoters'].hasError('max')) {
+            Value must be 100 or less
+          }
+          @if (enpsSettingsGroup().controls['promoters'].hasError('min')) {
+            Value must be 0 or greater
+          }
+        </div>
+      }
+      </div>
+    </div>
+    <div class="grid grid-cols-[1fr_20%] bg-[#F1F2F3] gap-2 px-4 py-2">
+      <div class="flex justify-start items-center gap-2">
+        <p class="bg-[#ff9601] rounded-md px-4 py-1 w-8 h-8"></p>
+        <p class="text-[#5B616C] font-medium text-sm uppercase">
+          Passives
+        </p>
+      </div>
+      <div class="flex flex-col space-x-1">
+        <div class="flex items-center">
+          <input
+            type="number"
+            min="0"
+            max="100"
+            formControlName="passives"
+            [class]="enpsSettingsGroup().controls['passives'].invalid && enpsSettingsGroup().controls['passives'].touched
+              ? 'w-full px-2 py-2 border border-[#FF4530] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'
+              : 'w-full px-2 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'"
+            [attr.aria-invalid]="enpsSettingsGroup().controls['passives'].invalid && enpsSettingsGroup().controls['passives'].touched ? 'true' : 'false'"
+            [attr.aria-describedby]="enpsSettingsGroup().controls['passives'].invalid && enpsSettingsGroup().controls['passives'].touched ? 'passives-error' : null"
+            aria-label="Passives percentage (0-100)"
+            placeholder="0"
+          />
+          <span class="text-sm text-[#747884]">%</span>
+        </div>
+        @if (enpsSettingsGroup().controls['passives'].invalid && enpsSettingsGroup().controls['passives'].touched) {
+        <div id="passives-error" class="mt-1 text-xs text-red-600" role="alert" aria-live="polite">
+          @if (enpsSettingsGroup().controls['passives'].hasError('max')) {
+            Value must be 100 or less
+          }
+          @if (enpsSettingsGroup().controls['passives'].hasError('min')) {
+            Value must be 0 or greater
+          }
+        </div>
+      }
+      </div>
+    </div>
+    <div class="grid grid-cols-[1fr_20%] bg-[#F1F2F3] gap-2 px-4 py-2">
+      <div class="flex justify-start items-center gap-2">
+        <p class="bg-[#ff4430] rounded-md px-4 py-1 w-8 h-8"></p>
+        <p class="text-[#5B616C] font-medium text-sm uppercase">Detractors</p>
+      </div>
+      <div class="flex flex-col space-x-1">
+        <div class="flex items-center">
+          <input
+            type="number"
+            min="0"
+            max="100"
+            formControlName="detractors"
+            [class]="enpsSettingsGroup().controls['detractors'].invalid && enpsSettingsGroup().controls['detractors'].touched
+              ? 'w-full px-2 py-2 border border-[#FF4530] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'
+              : 'w-full px-2 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'"
+            [attr.aria-invalid]="enpsSettingsGroup().controls['detractors'].invalid && enpsSettingsGroup().controls['detractors'].touched ? 'true' : 'false'"
+            [attr.aria-describedby]="enpsSettingsGroup().controls['detractors'].invalid && enpsSettingsGroup().controls['detractors'].touched ? 'detractors-error' : null"
+            aria-label="Detractors percentage (0-100)"
+            placeholder="0"
+          />
+          <span class="text-sm text-[#747884]">%</span>
+        </div>
+        @if (enpsSettingsGroup().controls['detractors'].invalid && enpsSettingsGroup().controls['detractors'].touched) {
+        <div id="detractors-error" class="mt-1 text-xs text-red-600" role="alert" aria-live="polite">
+          @if (enpsSettingsGroup().controls['detractors'].hasError('max')) {
+            Value must be 100 or less
+          }
+          @if (enpsSettingsGroup().controls['detractors'].hasError('min')) {
+            Value must be 0 or greater
+          }
+        </div>
+      }
+      </div>
+    </div>
+
+    <div class="items-center justify-between px-4 py-2 grid grid-cols-[1fr_20%]">
+      <span class="text-sm font-medium text-[#5B616C] uppercase">Total</span>
+      <span class="text-sm font-medium px-4 py-2 border border-[#E4E5E7] rounded-md bg-white text-[#5B616C] w-full text-center" aria-live="polite" aria-label="eNPS settings total">
+        {{ enpsSettingsTotal() }}%
+      </span>
+    </div>
+  </div>
+</fieldset>

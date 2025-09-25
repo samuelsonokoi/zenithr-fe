@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input, output, signal, effect } from '@angular/core';
 import { CdkStepper, CdkStepperModule} from '@angular/cdk/stepper';
-import { NgTemplateOutlet, CommonModule } from '@angular/common';
+import { NgTemplateOutlet } from '@angular/common';
 import { StepperConfig, StepConfig } from '../../core/models/stepper.model';
 
 /**
@@ -93,7 +93,7 @@ import { StepperConfig, StepConfig } from '../../core/models/stepper.model';
   selector: 'app-stepper',
   standalone: true,
   providers: [{provide: CdkStepper, useExisting: Stepper}],
-  imports: [NgTemplateOutlet, CdkStepperModule, CommonModule],
+  imports: [NgTemplateOutlet, CdkStepperModule],
   templateUrl: './stepper.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })

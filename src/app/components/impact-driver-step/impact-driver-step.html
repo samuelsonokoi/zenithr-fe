@@ -1,0 +1,224 @@
+<fieldset class="rounded-lg lg:max-w-5xl w-full mx-auto lg:py-8 py-16" [formGroup]="impactDriversGroup()">
+  <legend class="text-lg font-medium text-[#282D39]">Set the impact drivers</legend>
+  <p class="text-[#747884] text-xs mt-3">Distribute the weightage (in percentages) for different factors. The total should sum up to 100%. The system will calculate the Overall Score dynamically based on the provided values</p>
+
+  <div class="mt-8 space-y-2" aria-labelledby="impact-drivers-heading">
+    <div id="impact-drivers-heading" class="grid grid-cols-[1fr_20%] gap-2 px-4 py-2">
+      <p class="font-semibold text-xs uppercase text-[#747884]">Drivers</p>
+      <div class="text-center">
+        <p class="font-semibold text-xs uppercase text-[#747884]">AVG.</p>
+      </div>
+    </div>
+    <div class="grid grid-cols-[1fr_20%] bg-[#F1F2F3] gap-2 px-4 py-2">
+      <div class="flex justify-start items-center gap-2">
+        <p class="text-white font-bold text-2xl text-center bg-primary rounded-md px-4 py-1 w-12">I</p>
+        <p class="text-[#747884] font-medium text-sm uppercase">Innovation</p>
+      </div>
+      <div class="flex flex-col space-x-1">
+        <div class="flex items-center">
+          <input
+            type="number"
+            min="0"
+            max="100"
+            formControlName="innovation"
+            [class]="impactDriversGroup().controls['innovation'].invalid && impactDriversGroup().controls['innovation'].touched
+              ? 'w-full px-2 py-2 border border-[#FF4530] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'
+              : 'w-full px-2 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'"
+            [attr.aria-invalid]="impactDriversGroup().controls['innovation'].invalid && impactDriversGroup().controls['innovation'].touched ? 'true' : 'false'"
+            [attr.aria-describedby]="impactDriversGroup().controls['innovation'].invalid && impactDriversGroup().controls['innovation'].touched ? 'innovation-error' : null"
+            aria-label="Innovation percentage (0-100)"
+            placeholder="0"
+          />
+          <span class="text-sm text-[#747884]">%</span>
+        </div>
+        @if (impactDriversGroup().controls['innovation'].invalid && impactDriversGroup().controls['innovation'].touched) {
+        <div id="innovation-error" class="mt-1 text-xs text-red-600" role="alert" aria-live="polite">
+          @if (impactDriversGroup().controls['innovation'].hasError('max')) {
+            Value must be 100 or less
+          }
+          @if (impactDriversGroup().controls['innovation'].hasError('min')) {
+            Value must be 0 or greater
+          }
+        </div>
+      }
+      </div>
+    </div>
+    <div class="grid grid-cols-[1fr_20%] bg-[#F1F2F3] gap-2 px-4 py-2">
+      <div class="flex justify-start items-center gap-2">
+        <p class="text-white font-bold text-2xl text-center bg-primary rounded-md px-4 py-1 w-12">M</p>
+        <p class="text-[#747884] font-medium text-sm uppercase">Motivation</p>
+      </div>
+      <div class="flex flex-col space-x-1">
+        <div class="flex items-center">
+          <input
+            type="number"
+            min="0"
+            max="100"
+            formControlName="motivation"
+            [class]="impactDriversGroup().controls['motivation'].invalid && impactDriversGroup().controls['motivation'].touched
+              ? 'w-full px-2 py-2 border border-[#FF4530] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'
+              : 'w-full px-2 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'"
+            [attr.aria-invalid]="impactDriversGroup().controls['motivation'].invalid && impactDriversGroup().controls['motivation'].touched ? 'true' : 'false'"
+            [attr.aria-describedby]="impactDriversGroup().controls['motivation'].invalid && impactDriversGroup().controls['motivation'].touched ? 'motivation-error' : null"
+            aria-label="Motivation percentage (0-100)"
+            placeholder="0"
+          />
+          <span class="text-sm text-[#747884]">%</span>
+        </div>
+        @if (impactDriversGroup().controls['motivation'].invalid && impactDriversGroup().controls['motivation'].touched) {
+        <div id="motivation-error" class="mt-1 text-xs text-red-600" role="alert" aria-live="polite">
+          @if (impactDriversGroup().controls['motivation'].hasError('max')) {
+            Value must be 100 or less
+          }
+          @if (impactDriversGroup().controls['motivation'].hasError('min')) {
+            Value must be 0 or greater
+          }
+        </div>
+      }
+      </div>
+    </div>
+    <div class="grid grid-cols-[1fr_20%] bg-[#F1F2F3] gap-2 px-4 py-2">
+      <div class="flex justify-start items-center gap-2">
+        <p class="text-white font-bold text-2xl text-center bg-primary rounded-md px-4 py-1 w-12">P</p>
+        <p class="text-[#747884] font-medium text-sm uppercase">Performance</p>
+      </div>
+      <div class="flex flex-col space-x-1">
+        <div class="flex items-center">
+          <input
+            type="number"
+            min="0"
+            max="100"
+            formControlName="performance"
+            [class]="impactDriversGroup().controls['performance'].invalid && impactDriversGroup().controls['performance'].touched
+              ? 'w-full px-2 py-2 border border-[#FF4530] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'
+              : 'w-full px-2 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'"
+            [attr.aria-invalid]="impactDriversGroup().controls['performance'].invalid && impactDriversGroup().controls['performance'].touched ? 'true' : 'false'"
+            [attr.aria-describedby]="impactDriversGroup().controls['performance'].invalid && impactDriversGroup().controls['performance'].touched ? 'performance-error' : null"
+            aria-label="Performance percentage (0-100)"
+            placeholder="0"
+          />
+          <span class="text-sm text-[#747884]">%</span>
+        </div>
+        @if (impactDriversGroup().controls['performance'].invalid && impactDriversGroup().controls['performance'].touched) {
+        <div id="performance-error" class="mt-1 text-xs text-red-600" role="alert" aria-live="polite">
+          @if (impactDriversGroup().controls['performance'].hasError('max')) {
+            Value must be 100 or less
+          }
+          @if (impactDriversGroup().controls['performance'].hasError('min')) {
+            Value must be 0 or greater
+          }
+        </div>
+      }
+      </div>
+    </div>
+    <div class="grid grid-cols-[1fr_20%] bg-[#F1F2F3] gap-2 px-4 py-2">
+      <div class="flex justify-start items-center gap-2">
+        <p class="text-white font-bold text-2xl text-center bg-primary rounded-md px-4 py-1 w-12">A</p>
+        <p class="text-[#747884] font-medium text-sm uppercase">Autonomy</p>
+      </div>
+      <div class="flex flex-col space-x-1">
+        <div class="flex items-center">
+          <input
+            type="number"
+            min="0"
+            max="100"
+            formControlName="autonomy"
+            [class]="impactDriversGroup().controls['autonomy'].invalid && impactDriversGroup().controls['autonomy'].touched
+              ? 'w-full px-2 py-2 border border-[#FF4530] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'
+              : 'w-full px-2 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'"
+            [attr.aria-invalid]="impactDriversGroup().controls['autonomy'].invalid && impactDriversGroup().controls['autonomy'].touched ? 'true' : 'false'"
+            [attr.aria-describedby]="impactDriversGroup().controls['autonomy'].invalid && impactDriversGroup().controls['autonomy'].touched ? 'autonomy-error' : null"
+            aria-label="Autonomy percentage (0-100)"
+            placeholder="0"
+          />
+          <span class="text-sm text-[#747884]">%</span>
+        </div>
+        @if (impactDriversGroup().controls['autonomy'].invalid && impactDriversGroup().controls['autonomy'].touched) {
+        <div id="autonomy-error" class="mt-1 text-xs text-red-600" role="alert" aria-live="polite">
+          @if (impactDriversGroup().controls['autonomy'].hasError('max')) {
+            Value must be 100 or less
+          }
+          @if (impactDriversGroup().controls['autonomy'].hasError('min')) {
+            Value must be 0 or greater
+          }
+        </div>
+      }
+      </div>
+    </div>
+    <div class="grid grid-cols-[1fr_20%] bg-[#F1F2F3] gap-2 px-4 py-2">
+      <div class="flex justify-start items-center gap-2">
+        <p class="text-white font-bold text-2xl text-center bg-primary rounded-md px-4 py-1 w-12">C</p>
+        <p class="text-[#747884] font-medium text-sm uppercase">Connection</p>
+      </div>
+      <div class="flex flex-col space-x-1">
+        <div class="flex items-center">
+          <input
+            type="number"
+            min="0"
+            max="100"
+            formControlName="connection"
+            [class]="impactDriversGroup().controls['connection'].invalid && impactDriversGroup().controls['connection'].touched
+              ? 'w-full px-2 py-2 border border-[#FF4530] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'
+              : 'w-full px-2 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'"
+            [attr.aria-invalid]="impactDriversGroup().controls['connection'].invalid && impactDriversGroup().controls['connection'].touched ? 'true' : 'false'"
+            [attr.aria-describedby]="impactDriversGroup().controls['connection'].invalid && impactDriversGroup().controls['connection'].touched ? 'connection-error' : null"
+            aria-label="Connection percentage (0-100)"
+            placeholder="0"
+          />
+          <span class="text-sm text-[#747884]">%</span>
+        </div>
+        @if (impactDriversGroup().controls['connection'].invalid && impactDriversGroup().controls['connection'].touched) {
+        <div id="connection-error" class="mt-1 text-xs text-red-600" role="alert" aria-live="polite">
+          @if (impactDriversGroup().controls['connection'].hasError('max')) {
+            Value must be 100 or less
+          }
+          @if (impactDriversGroup().controls['connection'].hasError('min')) {
+            Value must be 0 or greater
+          }
+        </div>
+      }
+      </div>
+    </div>
+    <div class="grid grid-cols-[1fr_20%] bg-[#F1F2F3] gap-2 px-4 py-2">
+      <div class="flex justify-start items-center gap-2">
+        <p class="text-white font-bold text-2xl text-center bg-primary rounded-md px-4 py-1 w-12">T</p>
+        <p class="text-[#747884] font-medium text-sm uppercase">Transformational Leadership</p>
+      </div>
+      <div class="flex flex-col space-x-1">
+        <div class="flex items-center">
+          <input
+            type="number"
+            min="0"
+            max="100"
+            formControlName="transformationalLeadership"
+            [class]="impactDriversGroup().controls['transformationalLeadership'].invalid && impactDriversGroup().controls['transformationalLeadership'].touched
+              ? 'w-full px-2 py-2 border border-[#FF4530] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'
+              : 'w-full px-2 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-[#9297A0] text-center'"
+            [attr.aria-invalid]="impactDriversGroup().controls['transformationalLeadership'].invalid && impactDriversGroup().controls['transformationalLeadership'].touched ? 'true' : 'false'"
+            [attr.aria-describedby]="impactDriversGroup().controls['transformationalLeadership'].invalid && impactDriversGroup().controls['transformationalLeadership'].touched ? 'transformational-leadership-error' : null"
+            aria-label="Transformational Leadership percentage (0-100)"
+            placeholder="0"
+          />
+          <span class="text-sm text-[#747884]">%</span>
+        </div>
+        @if (impactDriversGroup().controls['transformationalLeadership'].invalid && impactDriversGroup().controls['transformationalLeadership'].touched) {
+        <div id="transformational-leadership-error" class="mt-1 text-xs text-red-600" role="alert" aria-live="polite">
+          @if (impactDriversGroup().controls['transformationalLeadership'].hasError('max')) {
+            Value must be 100 or less
+          }
+          @if (impactDriversGroup().controls['transformationalLeadership'].hasError('min')) {
+            Value must be 0 or greater
+          }
+        </div>
+      }
+      </div>
+    </div>
+
+    <div class="items-center justify-between px-4 py-2 grid grid-cols-[1fr_20%]">
+      <span class="text-sm font-medium text-[#5B616C] uppercase">Overall Score</span>
+      <span class="text-sm font-medium px-4 py-2 border border-[#E4E5E7] rounded-md bg-white text-[#5B616C] w-full text-center" aria-live="polite" aria-label="Overall impact drivers score">
+        {{ impactDriversTotal() }}%
+      </span>
+    </div>
+  </div>
+</fieldset>

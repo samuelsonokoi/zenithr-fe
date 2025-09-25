@@ -1,6 +1,5 @@
 import { Component, ChangeDetectionStrategy, input, signal, computed, effect } from '@angular/core';
 import { ReactiveFormsModule, FormGroup } from '@angular/forms';
-import { CommonModule } from '@angular/common';
 import { Survey, Option, SurveyPagination } from '../../core/models/scenario.model';
 import { allSurveyData, companyOptions, experienceProductOptions, tenantOptions } from '../../core/data/scenario-options';
 
@@ -8,7 +7,7 @@ import { allSurveyData, companyOptions, experienceProductOptions, tenantOptions 
   selector: 'app-product-step',
   templateUrl: './product-step.html',
   standalone: true,
-  imports: [ReactiveFormsModule, CommonModule],
+  imports: [ReactiveFormsModule],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProductStep {

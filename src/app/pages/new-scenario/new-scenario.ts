@@ -1,30 +1,29 @@
-import { Component, ChangeDetectionStrategy, ChangeDetectorRef, signal, computed, inject, ViewChild, ElementRef } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ChangeDetectorRef, signal, inject, ViewChild, output } from '@angular/core';
 import { CdkStepperModule } from '@angular/cdk/stepper';
 import { ReactiveFormsModule, FormControl, FormGroup, FormArray, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Stepper } from '../../components/stepper/stepper';
 import { StepperConfig } from '../../core/models/stepper.model';
-import {
-  CriteriaType,
-  CommentGroup,
-} from '../../core/models/scenario.model';
 import { duplicateDistributionValueValidator } from '../../core/validators/custom.validators';
-import { JsonPipe } from '@angular/common';
+import { Scenario } from '../../core/models/scenario.model';
 import { ProductStep } from '../../components/product-step/product-step';
 import { TotalRespondents } from '../../components/total-respondents/total-respondents';
 import { CriteriaDistribution } from '../../components/criteria-distribution/criteria-distribution';
+import { ImpactDriverStep } from '../../components/impact-driver-step/impact-driver-step';
+import { EnpsSettingsStep } from '../../components/enps-settings-step/enps-settings-step';
+import { CommentsStep } from '../../components/comments-step/comments-step';
 
 @Component({
   selector: 'app-new-scenario',
   standalone: true,
-  imports: [Stepper, CdkStepperModule, ReactiveFormsModule, ProductStep, TotalRespondents, CriteriaDistribution, JsonPipe],
+  imports: [Stepper, CdkStepperModule, ReactiveFormsModule, ProductStep, TotalRespondents, CriteriaDistribution, ImpactDriverStep, EnpsSettingsStep, CommentsStep],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './new-scenario.html',
 })
 export class NewScenario {
   protected readonly router = inject(Router)
-  protected readonly currentCommentSection = signal<CommentGroup>(CommentGroup.INNOVATION);
-  protected readonly CommentGroup = CommentGroup;
+
+  formSubmitted = output<Scenario>();
 
   @ViewChild(CriteriaDistribution) criteriaDistributionComponent!: CriteriaDistribution;
   readonly scenarioForm = new FormGroup({
@@ -201,34 +200,6 @@ export class NewScenario {
 
   private readonly cdr = inject(ChangeDetectorRef);
 
-  protected impactDriversTotal(): number {
-    const values = this.impactDriversGroup.value;
-    const driversValues = [
-      Number(values.innovation) || 0,
-      Number(values.motivation) || 0,
-      Number(values.performance) || 0,
-      Number(values.autonomy) || 0,
-      Number(values.connection) || 0,
-      Number(values.transformationalLeadership) || 0
-    ];
-
-    const filledValues = driversValues.filter(value => value > 0);
-    const average = filledValues.length > 0 ? filledValues.reduce((sum, value) => sum + value, 0) / filledValues.length : 0;
-    return Math.round(average * 100) / 100;
-  }
-
-  protected enpsSettingsTotal(): number {
-    const values = this.enpsSettingsGroup.value;
-    const enpsValues = [
-      Number(values.promoters) || 0,
-      Number(values.passives) || 0,
-      Number(values.detractors) || 0
-    ];
-
-    const filledValues = enpsValues.filter(value => value > 0);
-    const average = filledValues.length > 0 ? filledValues.reduce((sum, value) => sum + value, 0) / filledValues.length : 0;
-    return Math.round(average * 100) / 100;
-  }
 
   constructor() {
     this.completedSteps.update(steps => {
@@ -309,9 +280,6 @@ export class NewScenario {
   }
 
 
-  protected setCurrentComment(section: CommentGroup) {
-    this.currentCommentSection.set(section);
-  }
 
 
   private isProductGroupEmpty(): boolean {
@@ -340,6 +308,8 @@ export class NewScenario {
     if (this.scenarioForm.valid) {
       const formValue = this.scenarioForm.value;
       console.log('Form submitted with values:', formValue);
+      this.formSubmitted.emit(formValue);
+      this.scenarioForm.reset();
       this.router.navigate(['/']);
     } else {
       console.log('Form is invalid. Please check all required fields.');

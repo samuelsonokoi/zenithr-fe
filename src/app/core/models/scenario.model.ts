@@ -74,3 +74,43 @@ export enum CommentGroup {
   AUTONOMY = 'autonomy',
   CONNECTION = 'connection',
 }
+
+/**
+ * Form structure for creating a new scenario
+ * Represents the complete form data model
+ */
+export interface Scenario {
+  product?: {
+    title?: string | null;
+    tenant?: string | null;
+    company?: string | null;
+    experienceProduct?: string | null;
+    selectedSurveys?: string[] | null;
+  } | null;
+  respondentsTotal?: string | null;
+  criteriaDistributions?: Array<{
+    criteriaType?: CriteriaType;
+    criteriaId?: string;
+    percentage?: number;
+  }>;
+  impactDrivers?: {
+    innovation?: string | null;
+    motivation?: string | null;
+    performance?: string | null;
+    autonomy?: string | null;
+    connection?: string | null;
+    transformationalLeadership?: string | null;
+  } | null;
+  enpsSettings?: {
+    promoters?: string | null;
+    passives?: string | null;
+    detractors?: string | null;
+  } | null;
+  comments?: {
+    innovation?: string | null;
+    motivation?: string | null;
+    performance?: string | null;
+    autonomy?: string | null;
+    connection?: string | null;
+  } | null;
+}

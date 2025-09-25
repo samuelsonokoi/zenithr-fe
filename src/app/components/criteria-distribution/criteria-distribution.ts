@@ -1,6 +1,5 @@
 import { Component, ChangeDetectionStrategy, input, signal, computed, inject, ChangeDetectorRef } from '@angular/core';
 import { ReactiveFormsModule, FormControl, FormGroup, FormArray, Validators } from '@angular/forms';
-import { CommonModule } from '@angular/common';
 import { CriteriaType, CriteriaOption, CriteriaGroup } from '../../core/models/scenario.model';
 import { availableCriteria, criteriaOptions } from '../../core/data/scenario-options';
 
@@ -8,7 +7,7 @@ import { availableCriteria, criteriaOptions } from '../../core/data/scenario-opt
   selector: 'app-criteria-distribution',
   templateUrl: './criteria-distribution.html',
   standalone: true,
-  imports: [ReactiveFormsModule, CommonModule],
+  imports: [ReactiveFormsModule],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CriteriaDistribution {

@@ -6,8 +6,6 @@ import { CdkStepperModule } from '@angular/cdk/stepper';
 
 import { NewScenario } from './new-scenario';
 import { Stepper } from '../../components/stepper/stepper';
-import { CriteriaType } from '../../core/models/scenario.model';
-import { InputChangeEvent } from '../../core/types/form-events';
 
 // Mock the Router
 const mockRouter = {
@@ -19,13 +17,6 @@ describe('NewScenario Component', () => {
   let fixture: ComponentFixture<NewScenario>;
   let compiled: HTMLElement;
 
-  const createMockInputEvent = (value: string): InputChangeEvent => {
-    return {
-      target: { value } as HTMLInputElement,
-      preventDefault: jest.fn(),
-      stopPropagation: jest.fn()
-    } as unknown as InputChangeEvent;
-  };
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -123,61 +114,8 @@ describe('NewScenario Component', () => {
     });
   });
 
-  describe('Impact Drivers', () => {
-    beforeEach(() => {
-      const impactForm = component.scenarioForm.get('impactDrivers');
-      impactForm?.get('innovation')?.setValue('8');
-      impactForm?.get('motivation')?.setValue('7');
-    });
 
-    it('should calculate impact drivers total correctly', () => {
-      const total = component['impactDriversTotal']();
-      expect(typeof total).toBe('number');
-      expect(total).toBeGreaterThanOrEqual(0);
-    });
 
-    it('should handle empty impact driver values', () => {
-      const impactForm = component.scenarioForm.get('impactDrivers');
-      impactForm?.reset();
-      fixture.detectChanges();
-
-      const total = component['impactDriversTotal']();
-      expect(total).toBe(0);
-    });
-  });
-
-  describe('eNPS Settings', () => {
-    beforeEach(() => {
-      const enpsForm = component.scenarioForm.get('enpsSettings');
-      enpsForm?.get('promoters')?.setValue('8');
-      enpsForm?.get('passives')?.setValue('7');
-    });
-
-    it('should calculate eNPS total correctly', () => {
-      const total = component['enpsSettingsTotal']();
-      expect(typeof total).toBe('number');
-      expect(total).toBeGreaterThanOrEqual(0);
-    });
-
-    it('should handle empty eNPS values', () => {
-      const enpsForm = component.scenarioForm.get('enpsSettings');
-      enpsForm?.reset();
-      fixture.detectChanges();
-
-      const total = component['enpsSettingsTotal']();
-      expect(total).toBe(0);
-    });
-  });
-
-  describe('Comments Section', () => {
-    it('should handle comment form updates', () => {
-      const commentsForm = component.scenarioForm.get('comments');
-      expect(commentsForm).toBeTruthy();
-
-      commentsForm?.get('innovation')?.setValue('Test comment');
-      expect(commentsForm?.get('innovation')?.value).toBe('Test comment');
-    });
-  });
 
   describe('Form Submission', () => {
     beforeEach(() => {
@@ -208,10 +146,12 @@ describe('NewScenario Component', () => {
 
     it('should submit valid form', () => {
       const navigateSpy = jest.spyOn(mockRouter, 'navigate');
+      const formSubmittedSpy = jest.spyOn(component.formSubmitted, 'emit');
 
       component['onSubmit']();
 
       expect(navigateSpy).toHaveBeenCalledWith(['/']);
+      expect(formSubmittedSpy).toHaveBeenCalledWith(component.scenarioForm.value);
     });
 
     it('should not submit invalid form', () => {

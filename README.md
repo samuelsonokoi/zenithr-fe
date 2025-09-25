@@ -117,14 +117,20 @@ src/
 │   ├── components/           # Reusable UI components
 │   │   ├── header/           # Application header
 │   │   ├── sidebar/          # Navigation sidebar
-│   │   └── stepper/          # Custom stepper component
+│   │   ├── stepper/          # Custom stepper component
+│   │   ├── product-step/     # Product selection form step
+│   │   ├── total-respondents/ # Respondents input step
+│   │   ├── criteria-distribution/ # Criteria selection step
+│   │   ├── impact-driver-step/ # Impact drivers form step (NEW)
+│   │   ├── enps-settings-step/ # eNPS settings form step (NEW)
+│   │   └── comments-step/    # Comments section step (NEW)
 │   ├── core/                 # Core business logic
 │   │   ├── data/             # Static data and options
 │   │   ├── models/           # TypeScript interfaces/types
 │   │   └── validators/       # Custom form validators
 │   ├── pages/                # Route components
 │   │   ├── dashboard/        # Main dashboard
-│   │   └── new-scenario/     # Scenario creation wizard
+│   │   └── new-scenario/     # Scenario creation orchestrator
 │   ├── app.config.ts         # Application configuration
 │   ├── app.routes.ts         # Routing configuration
 │   └── app.ts                # Root component
@@ -310,7 +316,63 @@ expect(component['dataSignal']()).toEqual(expectedData);
 - Consistent patterns across all components
 - TypeScript compiler enforces access boundaries
 
-### 5. Modular Validation System
+### 5. Modular Step Components Architecture
+
+**Component Extraction Pattern:**
+
+The new-scenario page has been refactored into modular step components for better maintainability and reusability:
+
+```typescript
+// Step components receive FormGroup inputs and emit events
+@Component({
+  selector: 'app-impact-driver-step',
+  template: './impact-driver-step.html'
+})
+export class ImpactDriverStep {
+  impactDriversGroup = input.required<FormGroup>();
+
+  protected impactDriversTotal(): number {
+    // Calculation logic encapsulated within component
+  }
+}
+
+// Parent orchestrates form sections
+@Component({
+  template: `
+    <cdk-step>
+      <div formGroupName="impactDrivers">
+        <app-impact-driver-step [impactDriversGroup]="impactDriversGroup" />
+      </div>
+    </cdk-step>
+  `
+})
+export class NewScenario {
+  formSubmitted = output<Scenario>();
+
+  protected onSubmit(): void {
+    if (this.scenarioForm.valid) {
+      this.formSubmitted.emit(this.scenarioForm.value);
+      this.router.navigate(['/']);
+    }
+  }
+}
+```
+
+**Step Components:**
+
+- **ImpactDriverStep**: Impact drivers form with 6 drivers (Innovation, Motivation, Performance, Autonomy, Connection, Transformational Leadership)
+- **EnpsSettingsStep**: eNPS configuration (Promoters, Passives, Detractors)
+- **CommentsStep**: Comment sections with tabbed interface for different driver categories
+
+**Benefits:**
+
+- **Single Responsibility**: Each component handles one form section
+- **Reusability**: Step components can be used independently
+- **Maintainability**: Logic and templates are co-located
+- **Testing**: Individual step components have dedicated test suites
+- **Type Safety**: Strongly typed with Scenario interface for form emissions
+
+### 6. Modular Validation System
 
 **Custom Validators:**
 
